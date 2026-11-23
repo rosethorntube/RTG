@@ -216,7 +216,7 @@
           let heading=false;
           for(const {cells,i} of entries(b)){
             if(!matchesRange(cells[1])||!matches([...cells,classLabel(cells[0])])) continue;
-            if(character && classLabel(cells[0])!==character && norm(cells[0])!=='bsmith') continue;
+            if(character && classLabel(cells[0])!==character && !(norm(cells[0])==='bsmith' && window.RTGPlan.assigned(window.PlannerUI.plan,character).includes('Blacksmithing'))) continue;
             if(!heading) {content.append(node('h3','ref-subhead',groupIndex===0?'Dungeon chains':'Level 50 class quests'));heading=true;}
             content.append(questRow(b,i,character,true)); count++;
           }
@@ -227,11 +227,10 @@
     refresh();
   }
   const profNames = {'profession-ranks':'Training ranks','blacksmithing':'Blacksmithing','engineering':'Engineering','leatherworking':'Leatherworking','tailoring':'Tailoring','enchanting':'Enchanting','alchemy':'Alchemy','first-aid':'First Aid','vendors':'Vendor shopping list'};
-  const chooseProf={Priest:'engineering',Warrior:'blacksmithing',Druid:'leatherworking',Hunter:'engineering',Mage:'tailoring',Shaman:'leatherworking',Warlock:'alchemy',Paladin:'blacksmithing',Rogue:'leatherworking'};
   function professions(host,guide,character) {
     title(host,'Professions');
     const tabs=Object.entries(profNames).filter(([id])=>section(guide,id));
-    const defaultProf=chooseProf[character] || 'profession-ranks';
+    const defaultProf=(window.RTGPlan.assigned(window.PlannerUI.plan,character).map(s=>s.toLowerCase()).find(s=>tabs.some(([id])=>id===s))) || 'profession-ranks';
     const id=state.profession?.character===character?state.profession.id:defaultProf;
     let active=tabs.some(t=>t[0]===id)?id:tabs[0]?.[0];
     if(!active) {empty(host,'No profession entries available.');return;}
