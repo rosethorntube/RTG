@@ -1,0 +1,72 @@
+.field-reference { --r-line: #343a35; --r-muted: #b6b8aa; --r-warm: #dfb97c; --r-panel: #1c211e; color: #e9e7dc; min-width: 0; }
+.field-reference .ref-title { margin: 0 0 1.25rem; color: #f6eedc; font: 500 clamp(1.8rem,3.5vw,2.6rem)/1.09 Georgia,serif; }
+.field-reference .ref-subhead { margin: 1.35rem 0 .6rem; color: #ebdec7; font: 500 1.3rem/1.3 Georgia,serif; }
+.field-reference .ref-copy, .field-reference .ref-list, .field-reference .ref-context { margin: 0 0 .85rem; line-height: 1.58; font-size: 1rem; }
+.field-reference .ref-context, .field-reference .ref-place { color: var(--r-muted); }
+.field-reference .ref-tools { display: flex; gap: .85rem; flex-wrap: wrap; align-items: flex-end; padding: 0 0 1.2rem; }
+.field-reference .ref-field { display: flex; flex-direction: column; align-items: stretch; gap: .38rem; min-width: 9rem; }
+.field-reference .ref-wide { flex: 1 1 12rem; }
+.field-reference .ref-field-label, .field-reference .ref-label { font-weight: 600; font-size: .9rem; color: #d8d8cd; }
+.field-reference .ref-select, .field-reference .ref-search { min-height: 43px; border: 1px solid #4f574d; border-radius: 5px; background-color: #171d19; color: #f0eee2; font: inherit; font-size: 1rem; padding: .55rem .85rem; width: 100%; }
+.field-reference .ref-select { appearance: none; padding-right: 2.6rem; cursor: pointer; background-image: linear-gradient(45deg,transparent 50%,#caac7c 50%),linear-gradient(135deg,#caac7c 50%,transparent 50%); background-position: calc(100% - 16px) 54%, calc(100% - 11px) 54%; background-size: 5px 5px; background-repeat: no-repeat; }
+.field-reference :focus-visible { outline: 2px solid #f2bd68; outline-offset: 3px; }
+.field-reference .ref-static, .field-reference .ref-summary { min-height: 56px; padding: .75rem .9rem; display: flex; align-items: center; gap: .8rem; font-size: 1rem; }
+.field-reference .ref-static, .field-reference .ref-disclosure { background: var(--r-panel); border: 1px solid var(--r-line); border-radius: 5px; margin: 0 0 .47rem; }
+.field-reference .ref-summary { list-style: none; cursor: pointer; }
+.field-reference .ref-summary::-webkit-details-marker { display: none; }
+.field-reference .ref-chevron { width: .48rem; height: .48rem; border: solid #c2a476; border-width: 0 1.6px 1.6px 0; transform: rotate(45deg); flex: 0 0 .48rem; margin-right: 3px; margin-bottom: 3px; }
+.field-reference .ref-disclosure[open] > .ref-summary .ref-chevron { transform: rotate(225deg); margin-bottom: -3px; }
+.field-reference .ref-summary:hover { background: #242b25; border-radius: inherit; }
+.field-reference .ref-summary-title { flex: 1; font-weight: 600; }
+.field-reference .ref-meta, .field-reference .ref-buff { border: 1px solid #4c4636; background: #29271f; color: #e1c391; padding: .22rem .52rem; font-size: .84rem; border-radius: 4px; white-space: nowrap; }
+.field-reference .ref-detail { padding: .85rem .95rem; border-top: 1px solid var(--r-line); }
+.field-reference .ref-detail>.ref-copy:last-child { margin: 0; }
+.field-reference .ref-min { font-size: .9rem; color: #c8b298; }
+.field-reference .ref-tick { display: inline-flex; align-items: center; gap: .55rem; font-size: .9rem; cursor: pointer; margin-top: .7rem; }
+.field-reference .ref-tick input { appearance: auto; accent-color: #d5a65b; width: 16px; height: 16px; }
+.field-reference .ref-empty { padding: 1.1rem; border: 1px dashed var(--r-line); color: var(--r-muted); border-radius: 5px; }
+.field-reference .ref-table-scroll { overflow-x: auto; max-width: 100%; margin: .7rem 0 1rem; border: 1px solid var(--r-line); border-radius: 5px; }
+.field-reference .ref-table { border-collapse: collapse; width: 100%; min-width: 24rem; font-size: .96rem; }
+.field-reference .ref-table th, .field-reference .ref-table td { border: 0; border-bottom: 1px solid var(--r-line); padding: .62rem .8rem; text-align: left; vertical-align: top; line-height: 1.45; white-space: pre-line; }
+.field-reference .ref-table th { color: var(--r-warm); background: #252a23; font-size: .87rem; }
+.field-reference .ref-table th:first-child, .field-reference .ref-table td:first-child { min-width: 6rem; }
+.field-reference .ref-table tr:last-child td { border-bottom: 0; }
+.field-reference .ref-table tbody tr:nth-child(2n) { background: #1b201c; }
+.field-reference .ref-copy { white-space: pre-line; overflow-wrap: anywhere; }
+.field-reference .ref-label { margin: 0 0 .45rem; color: var(--r-warm); }
+.field-reference .ref-steps { margin: .3rem 0; padding-left: 1.65rem; }
+.field-reference .ref-steps li { padding: .12rem 0 .12rem .15rem; line-height: 1.5; }
+.field-reference a { color: #e1c08d; text-underline-offset: 3px; }
+.field-reference .ref-legacy { color: #9ac8f2; }
+.field-reference .ref-routes { list-style: none; padding: 0; margin: .7rem 0 1.15rem; }
+.field-reference .ref-route { display: grid; grid-template-columns: 5.2rem minmax(0,1fr) auto; gap: .8rem; align-items: start; padding: .85rem 0; border-bottom: 1px solid var(--r-line); }
+.field-reference .ref-skill { color: var(--r-warm); font-weight: 700; font-variant-numeric: tabular-nums; }
+.field-reference .ref-route h3 { margin: 0 0 .2rem; color: inherit; font-size: 1.07rem; line-height: 1.4; font-weight: 600; }
+.field-reference .ref-route p { margin: .1rem 0; font-size: .96rem; line-height: 1.45; }
+.field-reference .ref-lookup { border: 1px solid #625237; border-radius: 7px; padding: clamp(1rem,3vw,1.4rem); margin: 0 0 1.45rem; background: #20251f; }
+.field-reference .ref-lookup h3 { font: 500 1.45rem/1.25 Georgia,serif; margin: 0 0 .9rem; color: #f4e6c9; }
+.field-reference .ref-lookup .ref-tools { padding-bottom: .5rem; }
+.field-reference .ref-lookup .ref-field { flex: 1 1 10rem; min-width: 7rem; }
+.field-reference .ref-lookup .ref-skill-field { flex: 0 1 7rem; }
+.field-reference .ref-lookup-result { margin-top:.6rem; }
+.field-reference .ref-fish-links { display:flex; flex-wrap:wrap; gap:.45rem; margin:.45rem 0 .8rem; }
+.field-reference .ref-fish-link { font:inherit; color:#efd2a3; cursor:pointer; padding:.4rem .65rem; border:1px solid #66583e; background:#23271f; border-radius:4px; }
+.field-reference .ref-lookup dd, .field-reference .ref-lookup dt { margin: 0; }
+.field-reference .ref-lookup dl { display: grid; grid-template-columns: 7.5rem 1fr; gap: .42rem 1rem; margin: .55rem 0 0; font-size: .96rem; }
+.field-reference .ref-lookup dt { color: var(--r-muted); }
+.field-reference .ref-status { font-weight: 700; }
+.field-reference .ref-status[data-colour="orange"] { color: #ffad68; }
+.field-reference .ref-status[data-colour="yellow"] { color: #f4db7b; }
+.field-reference .ref-status[data-colour="green"] { color: #adcfa6; }
+.field-reference .ref-status[data-colour="grey"] { color: #b6bbb8; }
+@media(max-width:600px){
+ .field-reference .ref-tools { gap:.55rem; }
+ .field-reference .ref-field { flex:1 1 45%; min-width:0; }
+ .field-reference .ref-wide { flex:1 1 100%; }
+ .field-reference .ref-route { grid-template-columns:4rem minmax(0,1fr); gap:.35rem .6rem; }
+ .field-reference .ref-buff { grid-column:2; justify-self:start; }
+ .field-reference .ref-meta { white-space:normal; }
+ .field-reference .ref-lookup dl { grid-template-columns:1fr; gap:.15rem; }
+ .field-reference .ref-lookup dt { margin-top:.35rem; }
+}
+

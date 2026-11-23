@@ -1,0 +1,12 @@
+.app-icon { display:inline-flex;align-items:center;justify-content:center;flex:none; }
+.app-mobile-nav { display:none; }
+.app-pane { min-width:0; }
+.source-date { order:1; }
+.foot a { order:2; }
+@media(max-width:670px) {
+  .tabinner { overflow:visible; }
+  .tabinner>.tab { display:none; }
+  .app-mobile-nav { width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#c4c4b6;font-size:14px;padding:8px 0; }
+  .app-mobile-nav .pselect { flex:0 1 13rem; }
+  .foot .source-date { order:2;flex:1 0 100%; }
+}
