@@ -52,6 +52,7 @@
   }
   function currentTab() {
     const raw=location.hash.slice(1);
+    if(raw==='addon')return 'advisor';
     return tabs.some(([id])=>id===raw)?raw:window.PlannerUI.defaultTab();
   }
   function switchTo(id) {if(currentTab()!==id)location.hash=id;}
@@ -95,49 +96,57 @@
   function advisorView(host) {
     host.className='advisor';
     const intro=el('div','advintro'), left=el('div');
-    left.append(el('p','eyeline','WoW Forever addon'),el('h2','title','Rosethorn Advisor'),
-      el('p','lead','Your profession advisor for the whole roster. See which character should train next, who can use the materials in your bags, and which crafting milestone is within reach.'));
-    const download=anchor('RosethornAdvisor.zip?v=0.3.0','','cta');download.setAttribute('download','RosethornAdvisor.zip');
-    download.append(icon('download'),el('span','','Download addon'));intro.append(left,download);host.append(intro);
+    left.append(el('p','eyeline','WoW Forever · Horde'),el('h2','title','Rosethorn Advisor'),
+      el('p','lead','Dungeon pickups, profession milestones and fishing advice for the character you’re playing and the alts you’re levelling. Works on its own.'));
+    const download=anchor('RosethornAdvisor.zip?v=0.3.3','','cta');
+    download.setAttribute('download','RosethornAdvisor.zip');
+    download.append(icon('download'),el('span','','Download addon'));
+    intro.append(left,download);
+    host.append(intro);
+
     const cards=el('div','advgrid');
-    for(const [name,copy] of [
-      ['What should I do next?','Now looks across your characters for a nearby crafting milestone, a training cap or materials another character can use.'],
-      ['Your twelve professions','Browse skills by profession or character. See a suggested recipe and shopping estimate for each crafting band. Mark a profession you intend to learn and get a reminder on this roster.'],
-      ['Fish while you wait','When you cast, see the local Fishing target. Compare the value of your catch per cast and per hour, or find a spot that supplies recipes your cook can still learn from.']
-    ]){
-      const card=el('section','advcard');card.append(el('h3','',name),el('p','',copy));cards.append(card);
+    const dungeon=el('section','advcard');
+    dungeon.style.gridColumn='1 / -1';
+    dungeon.append(el('h3','','Never miss another dungeon prequest'),
+      el('p','','The icon lights up anywhere in your zone when a tracked dungeon pickup becomes available. Hit level 30 in Undercity’s Trade Quarter? You’ll see Going, Going, Guano! from Faranell in the Apothecarium.'));
+    cards.append(dungeon);
+    const features=[
+      ['Find the quest giver','Tick Mark on map for as many givers as you like. Choose Navigate for an arrow to one. Quests from the same NPC share a pin until you’ve picked them all up.'],
+      ['Spot your next crafting Legacy Point','See which alt is close to 150, 225 or 300 in a craft. Open Professions for the next recipe and an estimate of the materials you’ll need.'],
+      ['Know which alt needs your materials','Before you visit the mailbox, see who can use your ore, leather or cloth. Check each alt’s last recorded profession ranks, bags and bank.'],
+      ['Make a stop while you’re passing','Fish while you wait for the boat at Ratchet or Booty Bay. Leaving the Barrens at Mining 115–124? Get a reminder to mine on the way to 125. Compatible RestedXP routes can trigger these tips.'],
+      ['Find the recipe for the fish you just caught','Catch a Raw Rockscale Cod in Booty Bay? The recipe card sends you to Kelsey Yance in the Old Port Authority, bottom deck, on the left as you enter.'],
+      ['Decide whether to cook or sell your catch','Compare your fishing spots by auction value per cast or per hour. See when selling fish and buying cheaper Cooking ingredients could give you more skill-ups.']
+    ];
+    for(const [title,copy] of features){
+      const card=el('section','advcard');
+      card.append(el('h3','',title),el('p','',copy));
+      cards.append(card);
     }
     host.append(cards);
-    const d=el('details','advdet');d.open=true;d.append(el('summary','','Install the addon'));
-    const ol=el('ol');
-    for(const text of ['Download and unzip RosethornAdvisor.zip.','Copy the RosethornAdvisor folder into your WoW Forever installation’s Interface/AddOns folder. The .toc file should sit directly inside RosethornAdvisor.','Restart WoW or reload the interface, enable Rosethorn Advisor in AddOns, then type /rtg to open the options.'])ol.append(el('li','',text));
-    d.append(ol);host.append(d);
-    const use=el('details','advdet');
-    use.append(el('summary','','Using the advisor in game'),
-      el('p','','Type /rtg or right-click the advisor icon to open General, Tips and Appearance. Left-click reads the current tip. Drag the icon or window while unlocked.'),
-      el('p','','Dismiss a tip for this visit, or choose Don’t show again to mute it across characters. Use Undo or restore it from Muted tips. The Appearance tab previews window size, text, colours and opacity.'),
-      el('p','','Open the full advisor from General to browse profession plans, alts and fishing. Log in to each character and visit their bank to update its stock.'));
-    host.append(use);
-    const fishing=el('details','advdet');
-    fishing.append(el('summary','','Fishing sessions and auction estimates'),
-      el('p','','Search at an auction house to record listings, enter your own unit prices, or use cached Auctionator quotes. Each quote shows its market and time. Away from the AH, the faction market is the default. Choose your sale market in /rtg → General.'),
-      el('p','','After five minutes, the session shows gross auction value per hour for priced raw catches. It flags missing prices and unusually valuable catches. For known recipes, compare raw and cooked proceeds after extra ingredients and the auction cut where known (5% faction, 15% neutral). Estimates assume a sale and exclude relisting and lure costs.'),
-      el('p','','To rank fishing spots, record at least 15 minutes and 10 items at each. All catches need quotes from the same market no more than seven days old. Value per cast also needs 20 observed casts, including empty casts. A venue-unverified Auctionator quote can give a rough session estimate. Cooking comparisons use recipes available at your current skill and show the cost of buying ingredients instead.'),
-      el('p','','Open Fishing in the full advisor for session details. Fishing notices and the session reset are available in options.'));
-    const thresholds=el('p');thresholds.append('For zero escapes in open water, aim for 75 Fishing at Ratchet, 225 at Booty Bay and 300 at Camp Mojache. Pole and lure bonuses count. ',anchor('https://www.wowhead.com/forever/guide/professions/fishing/overview-leveling','Fishing requirements by zone ↗','arm',true));
-    fishing.append(thresholds);host.append(fishing);
-    const levelling=el('details','advdet');levelling.append(el('summary','','When to level professions'));
-    const advice=el('ul');
-    const lines=[
-      ['Priest → Warrior','Send the Priest’s ore to the Warrior at level 10 for starter Blacksmithing gear. By Warrior 25, switch to Engineering and aim for 150.'],
-      ['Druid','Bank the Priest’s skins for Leatherworking 150 at Druid 10 and 225 at 25. The advisor compares the 150, 225 and 300 thresholds across your observed roster.'],
-      ['Mage','Send cloth and spare BoE greens to the level 5 bank Mage for bags and disenchanting. Aim for Tailoring and Enchanting 150 at 10, then 225 at 25.'],
-      ['Warlock','Bank herbs for Alchemy 150 at Warlock 10. Keep later herbs for the return journey to 60.'],
-      ['Leaving the Barrens','If your miner is at 115–124, use the route reminder to mine Tin or Silver on the way out. Iron Deposits open at Mining 125.']
-    ];
-    for(const [name,copy] of lines){const li=el('li');li.append(el('strong','',name+'. '),copy);advice.append(li);}
-    levelling.append(el('p','','Examples from the published roster plan. The in-game recommendations use the skills and stock you actually have.'),advice);
-    host.append(levelling);
+
+    function details(title, ...children) {
+      const box=el('details','advdet');
+      box.append(el('summary','',title),...children);
+      host.append(box);
+    }
+    const steps=el('ol');
+    for(const line of ['Download and unzip RosethornAdvisor.zip.',
+      'Copy the RosethornAdvisor folder into your WoW Forever Interface/AddOns folder.',
+      'Enable Rosethorn Advisor at character selection. Left-click its icon for suggestions or type /rtg for settings.']){
+      steps.append(el('li','',line));
+    }
+    details('Install the addon',steps);
+    details('Alerts and account-wide settings',
+      el('p','','All current suggestions share one scrollable list. The border glows while alerts are unread. Dismiss a pickup for this visit, snooze alerts for ten minutes, or mute a tip across your characters. You can restore muted tips.'),
+      el('p','','Choose which categories can open the window or pause them in combat. Pick colours and transparency for the text, background, window border and icon glow. Your layout, alerts, snooze, tabs and auction market carry across alts on this installation.'));
+    details('Dungeon coverage and profession tracking',
+      el('p','','The catalogue covers 502 Horde and shared quests and prerequisites. Each pickup shows the required level and colour-coded quest level. Accepting a quest clears the pickup, and completing a prerequisite can reveal the next one. There are verified map locations for 402 quests. In a Spelunker dungeon, the addon reminds you to check final-boss credit.'),
+      el('p','','Browse all 12 professions, plan a profession for an alt and check training caps. The six primary crafts have recipe routes and shopping estimates. Log into each alt and open its bank to update its stock. Open Cooking to record learned recipes. Check the in-game Legacy panel for points earned elsewhere.'));
+    details('Fishing, routes and auction prices',
+      el('p','','While you cast at supported spots, see the Fishing skill needed to avoid escapes, including pole and lure bonuses. Get reminders for training books and nearby recipe vendors. Use your location, choose a destination manually or follow a compatible RestedXP arrow.'),
+      el('p','','Search for an item at the auction house, enter a price yourself or use optional Auctionator quotes. The session estimates gross auction value per hour after five minutes and flags unpriced catches. Raw-versus-cooked comparisons account for ingredients and the auction cut when known.'),
+      el('p','','Spot rankings compare waters you’ve personally fished. Each needs 15 minutes, 10 landed items and complete recent prices for the same market. Value per cast also needs 20 observed casts, including empty ones.'));
   }
   function render() {
     const id=currentTab();navSelect.value=id;

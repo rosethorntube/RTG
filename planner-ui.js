@@ -1,7 +1,7 @@
 (() => {
   'use strict';
   const M=window.RTGPlan;
-  let plan=M.load(), editing=plan.order[0], dragged=null;
+  let plan=M.load(), editing=plan.order[0], dragged=null, otherOpen=false;
   const expanded=new Set(['Novice']);
   const node=(tag,css,text)=>{const n=document.createElement(tag);if(css)n.className=css;if(text!=null)n.textContent=text;return n;};
   function button(label,css,action) {
@@ -88,26 +88,91 @@
     for(const [label,help] of headers){const th=node('th','',label);th.scope='col';if(help)th.title=help;head.append(th);}
     return {table,body:table.createTBody()};
   }
-  function milestones(host,redraw){
-    if(!M.available(plan)) {
-      host.append(node('h2','title','Your milestones'),node('p','plan-lead',plan.order.length?'Finish choosing two professions per class to open your board.':'Choose the classes you want to level to build your milestone board.'),button('Set up my roster','cta',()=>go('setup')));return;
+  function rewardBadge(text,earned=false) {
+    return node('span','reward-tag'+(earned?' reward-earned':''),text);
+  }
+  function rewardCell(cell,key,label,redraw) {
+    const reward=M.reward(plan,key);
+    cell.append(check(key,label,redraw));
+    if(!reward.eligible)return;
+    cell.className='lp-cell';
+    let badge;
+    if(reward.status==='elsewhere')badge=rewardBadge('Counted',true);
+    else if(reward.status==='earned')badge=rewardBadge('Earned',true);
+    else badge=rewardBadge('+1 LP');
+    cell.append(badge);
+    const explanation=reward.status==='elsewhere'?'Already counted on another character':
+      reward.status==='earned'?'Already included in earned LP':'One Legacy Point the first time';
+    cell.title=label+' — '+explanation+(reward.status==='elsewhere' && reward.creditedTo?' ('+reward.creditedTo+')':'')+
+      (reward.onCheck>1?'. Ticking this also fills earlier ranks for '+reward.onCheck+' LP in total.':'');
+    cell.firstChild.setAttribute('aria-label',cell.title);
+  }
+  function accountTotal(host,summary,redraw) {
+    const box=node('section','account-lp');box.setAttribute('aria-label','Legacy Points earned on this account');
+    const main=node('div','account-lp-main'),num=node('strong','earned-number',String(summary.earned));
+    const caption=node('div','earned-caption');
+    caption.append(node('b','','LP earned'),node('small','','Recorded in this browser'));
+    main.append(num,caption);
+    const target=plan.goal, goal=node('div','lp-goal');
+    if(target>0){
+      const bar=node('progress');bar.max=target;bar.value=Math.min(summary.earned,target);
+      bar.setAttribute('aria-label','Progress towards '+target+' Legacy Points');
+      goal.append(node('b','',summary.earned>=target?target+'-LP goal reached':(target-summary.earned)+' LP to your '+target+'-point goal'),bar);
     }
-    const summary=M.totals(plan),head=node('div','plan-head'),left=node('div');
-    left.append(node('h2','title','Your milestones'),node('p','plan-lead','Tick your highest level or skill to fill earlier ranks. Inn stays and dungeon clears are separate. Saved in this browser.'));
-    head.append(left,node('strong','lp-total',summary.done+' / '+summary.max+' planned LP'));host.append(head);
+    const detail=node('div','lp-breakdown');
+    for(const [name,value] of [['Class levels',summary.classLP],['Crafts',summary.skillLP],['Spelunker',summary.dungeonLP],['Other',summary.otherLP]]){
+      const line=node('span');line.append(node('strong','',String(value)),document.createTextNode(' '+name));detail.append(line);
+    }
+    const extra=node('details','other-points');extra.open=otherOpen;
+    extra.ontoggle=()=>{if(extra.isConnected)otherOpen=extra.open;};
+    extra.append(node('summary','','Record other LP'));
+    const label=node('label','','LP from other challenges '),input=node('input');
+    input.type='number';input.min='0';input.step='1';input.value=String(summary.otherLP);input.id='lp-other';
+    input.setAttribute('aria-describedby','other-lp-help');
+    input.onchange=()=>{
+      const amount=input.value.trim()===''?0:input.valueAsNumber;
+      if(!input.validity.valid || !M.setOtherLP(plan,amount)){input.value=String(summary.otherLP);return;}
+      otherOpen=true;redraw(true,'lp-other');
+    };
+    const help=node('p','plan-note','Enter only points earned outside these class, crafting and Spelunker milestones, such as PvP or exploration.');help.id='other-lp-help';
+    label.append(input);extra.append(label,help);
+    box.append(main,goal,detail,extra);host.append(box);
+  }
+  function showStep(key) {
+    const c=document.getElementById(key),box=c?.closest('details');
+    if(box)box.open=true;
+    c?.focus({preventScroll:true});c?.scrollIntoView({block:'center',behavior:'smooth'});
+  }
+  function milestones(host,redraw){
+    const summary=M.totals(plan);
+    const left=node('div','plan-head'),title=node('div');
+    title.append(node('h2','title','Your milestones'),node('p','plan-lead','Tick your highest level or skill to fill earlier ranks. Gold labels mark Legacy Point rewards.'));
+    left.append(title);host.append(left);accountTotal(host,summary,redraw);
+    if(!M.available(plan)) {
+      host.append(node('p','plan-lead',plan.order.length?'Finish choosing two professions per class to open your board.':'Choose the classes you want to level to build your milestone board.'),button('Set up my roster','cta',()=>go('setup')));return;
+    }
     const next=M.suggestion(plan);
     if(next){
       const callout=node('section','next-tip'),copy=node('div');
       copy.append(node('small','','Suggested next'),node('h3','',next.title),node('p','',next.why));callout.append(copy,button('Show on board ↓','plan-alt',()=>{
         const c=document.getElementById(next.key);const box=c?.closest('details');if(box)box.open=true;c?.focus({preventScroll:true});c?.scrollIntoView({block:'center',behavior:'smooth'});
       }));host.append(callout);
+      if(next.alternative){
+        const alt=next.alternative;
+        const section=node('div','plan-alternative');
+        section.append(node('b','','Also worth considering'),node('span','',alt.title+'. '+alt.why),
+          button('Show alternative','plan-alt',()=>showStep(alt.key)));host.append(section);
+      }
     }else if(summary.max===summary.done)host.append(node('p','next-tip','All planned Legacy Points earned.'));
     const grid=node('div','board-grid'), lv=node('section','plan-box'),pro=node('section','plan-box'),dun=node('section','plan-box');
     host.append(grid);grid.append(lv,pro,dun);lv.append(node('h3','','Character levels'));
     const levelTable=tableFrame([['Class'],...M.levels.map(n=>[String(n),M.descriptions[n]])]);
     for(const c of plan.order) {
       const row=levelTable.body.insertRow(),name=node('th');name.scope='row';name.append(art(c),document.createTextNode(c));row.append(name);
-      for(const n of M.levels){const cell=row.insertCell();cell.title=c+' · '+n+' · '+M.descriptions[n];cell.append(check(M.levelKey(c,n),cell.title,redraw));if(M.lpLevels.includes(n))cell.className='lp-cell';}
+      for(const n of M.levels){
+        const cell=row.insertCell(), label=c+' · Level '+n+' · '+M.descriptions[n];
+        cell.title=label;rewardCell(cell,M.levelKey(c,n),label,redraw);
+      }
     }
     lv.append(levelTable.table,node('p','plan-note','5 · Park in an inn. 10 / 20 / 35 · Journeyman, Expert and Artisan training. 25 / 45 / 60 · +1 LP each.'));
     pro.append(node('h3','','Professions'));
@@ -116,10 +181,9 @@
       for(const s of M.assigned(plan,c)){
         const row=skillTable.body.insertRow(),name=node('th');name.scope='row';name.append(node('small','skill-owner',c),document.createTextNode(s));row.append(name);
         for(const n of M.ranks){
-          const cell=row.insertCell(), isCraft=M.crafts.includes(s);
-          const lp=isCraft?(M.earned(plan,s,n)?'LP already counted':'First time: +1 LP'):'Gathering checkpoint';
-          cell.title=c+' · '+s+' '+n+' · '+lp;
-          if(isCraft)cell.className='lp-cell';cell.append(check(M.skillKey(c,s,n),cell.title,redraw));
+          const cell=row.insertCell(),label=c+' · '+s+' '+n;
+          cell.title=M.crafts.includes(s)?label:label+' · Gathering checkpoint';
+          rewardCell(cell,M.skillKey(c,s,n),cell.title,redraw);
         }
       }
     }
@@ -129,8 +193,15 @@
       const box=node('details','spelunker');box.open=expanded.has(group);
       box.ontoggle=()=>{if(!box.isConnected)return;if(box.open)expanded.add(group);else expanded.delete(group);};
       const title=node('summary'), done=runs.filter(([d])=>plan.flags[M.dungeonKey(d)]).length;
-      title.append(node('b','',group+' Spelunker'),node('span',done===runs.length?'complete-count':'',done+'/'+runs.length));box.append(title);
-      for(const [d] of runs){const lab=node('label','dungeon-line');lab.append(check(M.dungeonKey(d),group+' Spelunker · '+d,redraw),document.createTextNode(d));box.append(lab);}
+      const complete=done===runs.length;
+      title.append(node('b','',group+' Spelunker'),node('small','group-count',done+'/'+runs.length),
+        rewardBadge(complete?'1 LP earned':'+1 LP for set',complete));box.append(title);
+      for(const [d] of runs){
+        const key=M.dungeonKey(d),lab=node('label','dungeon-line');
+        const finalClear=!plan.flags[key]&&done===runs.length-1;
+        lab.append(check(key,group+' Spelunker · '+d+(finalClear?' · Completes the set for one LP':''),redraw),document.createTextNode(d));
+        if(finalClear)lab.append(rewardBadge('+1 LP to finish'));box.append(lab);
+      }
       dun.append(box);
     }
     const sources=node('a','plan-note','Legacy challenge criteria ↗');sources.href='https://www.wowhead.com/forever/guide/legacy-system-overview-rewards';sources.target='_blank';sources.rel='noopener';dun.append(sources);

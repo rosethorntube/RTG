@@ -2,3 +2,45 @@
 @media(max-width:1100px){.board-grid{grid-template-columns:1fr 1fr}.board-grid>section:first-child{grid-column:1/-1}.plan-table th:first-child{width:24%}}
 @media(max-width:760px){.hero-inner{min-height:170px}.planner{padding-top:16px}.setup-grid,.board-grid{grid-template-columns:1fr}.plan-head,.next-tip{align-items:flex-start;flex-wrap:wrap}.setup-row{gap:5px;padding-inline:3px}.setup-row .class-name{min-width:0}.setup-row .class-name b{font-size:13px}.edit-jobs{font-size:11px}.plan-box{padding:12px}.drag-grip{display:none}.plan-table th .class-art{display:none}.plan-head{gap:7px}.plan-table th:first-child{width:24%}.prof-choices{grid-template-columns:1fr 1fr}.board-grid section:nth-child(2) th:first-child{width:50%}}
 @media(max-width:400px){.planner .plan-box{padding:9px}.move{min-width:22px}.setup-row .class-art{width:18px;height:18px}.prof-choices{gap:3px}.job-choice{font-size:13px}}
+
+.account-lp {
+  display:grid;
+  grid-template-columns:auto minmax(12rem,1fr);
+  align-items:center;
+  gap:12px 24px;
+  margin:0 0 18px;
+  padding:15px 18px;
+  border:1px solid #78623d;
+  border-radius:7px;
+  background:linear-gradient(110deg,#322c20,#23271f 68%);
+}
+.account-lp-main,.lp-breakdown,.plan-alternative {display:flex;align-items:center;gap:12px}
+.earned-number {font:700 42px/1 Georgia,serif;font-variant-numeric:tabular-nums;color:#ffda92}
+.earned-caption b,.earned-caption small,.lp-goal b {display:block}
+.earned-caption small,.lp-breakdown,.other-points,.plan-alternative {color:#c7c8b9;font-size:13px}
+.lp-goal {width:100%;max-width:24rem;justify-self:end}
+.lp-goal b {margin-bottom:4px;font-size:14px}
+.lp-goal progress {width:100%;height:9px;accent-color:#edbb69}
+.lp-breakdown {flex-wrap:wrap;gap:4px 14px}
+.lp-breakdown span {white-space:nowrap}
+.other-points {justify-self:end}
+.other-points summary {cursor:pointer;color:#f0cb92}
+.other-points label {display:block;margin-top:8px}
+.other-points input {width:4.5rem;padding:3px 6px;font:inherit;color:inherit;background:#20231e;border:1px solid #77745f;border-radius:4px}
+.other-points .plan-note {max-width:21rem}
+.reward-tag {display:inline-block;color:#ffd895;font-size:10px;font-weight:700;line-height:1.2}
+.reward-tag.reward-earned {color:#b9ceac}
+.plan-table td.lp-cell .reward-tag {display:block;margin:1px auto;white-space:normal}
+.spelunker summary .reward-tag {float:none;margin-left:8px;color:#ffd895}
+.spelunker summary .reward-earned {color:#b9ceac}
+.spelunker .group-count {float:right;font-weight:500}
+.plan-alternative {gap:6px 12px;flex-wrap:wrap;margin:-6px 0 16px;padding-inline:3px}
+.plan-alternative b {color:var(--paper)}
+.plan-alternative .plan-alt {padding:3px 8px;font-size:12px}
+@media(max-width:640px){
+  .account-lp {grid-template-columns:1fr;gap:8px;padding:12px}
+  .lp-goal,.other-points {justify-self:start}
+  .earned-number {font-size:36px}
+  .plan-table td.lp-cell .reward-tag {font-size:9px}
+}
+
