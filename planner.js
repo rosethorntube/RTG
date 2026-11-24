@@ -64,7 +64,7 @@
   }
   function available(p) {return p.order.length>0 && p.order.every(c=>assigned(p,c).length===2);}
   function level(p,c) {return Math.max(1,...levels.filter(n=>p.flags[levelKey(c,n)]));}
-  function earned(p,prof,n) {return classes.some(c=>p.flags[skillKey(c,prof,n)]);}
+  function earned(p,prof,n) {return p.order.some(c=>p.flags[skillKey(c,prof,n)]);}
   function setOtherLP(p,input) {
     const text=typeof input==='string'?input.trim():input;
     if(typeof text!=='number' && (typeof text!=='string' || !/^\d*$/.test(text))) return false;
@@ -76,11 +76,11 @@
   function missingRuns(p,runs) {return runs.filter(([name])=>!p.flags[dungeonKey(name)]);}
   function totals(p) {
     const plannedCrafts = new Set(p.order.flatMap(c=>assigned(p,c)).filter(s=>crafts.includes(s)));
-    let classLP=0, skillLP=0, plannedDone=0;
-    for (const c of classes) for(const n of lpLevels) if(p.flags[levelKey(c,n)]) {
-      classLP++;
-      if(p.order.includes(c)) plannedDone++;
+    let classLP=0, skillLP=0;
+    for (const c of p.order) {
+      for (const n of lpLevels) if (p.flags[levelKey(c,n)]) classLP++;
     }
+    let plannedDone=classLP;
     for (const s of crafts) for(const n of ranks) if(earned(p,s,n)) {
       skillLP++;
       if(plannedCrafts.has(s)) plannedDone++;
@@ -95,12 +95,12 @@
   function reward(p,id) {
     const [kind,name,tier,last]=id.split('/');
     let status='none', onCheck=0, creditedTo;
-    if(kind==='level' && classes.includes(name) && levels.includes(+tier)) {
+    if(kind==='level' && p.order.includes(name) && levels.includes(+tier)) {
       if(lpLevels.includes(+tier)) status=p.flags[id]?'earned':'available';
       onCheck=lpLevels.filter(n=>n<=+tier && !p.flags[levelKey(name,n)]).length;
-    } else if(kind==='skill' && classes.includes(name) && crafts.includes(tier) && ranks.includes(+last)) {
+    } else if(kind==='skill' && p.order.includes(name) && crafts.includes(tier) && ranks.includes(+last)) {
       // Flag insertion order tracks the first recorded owner even after the roster is reordered.
-      const owned=new Set(classes.filter(c=>p.flags[skillKey(c,tier,+last)]).map(c=>skillKey(c,tier,+last)));
+      const owned=new Set(p.order.filter(c=>p.flags[skillKey(c,tier,+last)]).map(c=>skillKey(c,tier,+last)));
       const first=Object.keys(p.flags).find(k=>owned.has(k));
       creditedTo=first?.split('/')[1];
       status=first?(first===id?'earned':'elsewhere'):'available';
@@ -175,7 +175,7 @@
     if(!p.order.length) return null;
     const goal=p.goal===undefined?16:p.goal;
     const lead=p.order.find(c=>level(p,c)<60);
-    if(lead && goal>0 && totals(p).earned>=goal && !classes.some(c=>level(p,c)===60)) {
+    if(lead && goal>0 && totals(p).earned>=goal && !p.order.some(c=>level(p,c)===60)) {
       const step=levelStep(p,lead,60);
       return {...step,why:'Your '+goal+' LP target is met. Take '+lead+', the first unfinished class in your chosen order, to 60.'};
     }
@@ -217,5 +217,5 @@
     }
     return artisan?.step || null;
   }
-  window.RTGPlan={key,classes,crafts,professions,levels,descriptions,ranks,groups,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,suggestion};
+  window.WYHPlan={key,classes,crafts,professions,levels,descriptions,ranks,groups,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,suggestion};
 })();

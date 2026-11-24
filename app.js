@@ -2,6 +2,8 @@
   'use strict';
   const guide=window.ROSE_GUIDE;
   const page=document.getElementById('page');
+  const addonPage=document.getElementById('wyh-addon');
+  const guideTitle=document.title;
   const nav=document.getElementById('nav');
   const section=id=>guide.sections.find(s=>s.id===id);
   const firstTable=id=>section(id).blocks.find(b=>b.type==='table');
@@ -93,82 +95,31 @@
     for(const c of window.PlannerUI.plan.order)select.append(option(c,c));
     select.value=character;select.addEventListener('change',()=>changeCharacter(select.value));label.append(select);return label;
   }
-  function advisorView(host) {
-    host.className='advisor';
-    const intro=el('div','advintro'), left=el('div');
-    left.append(el('p','eyeline','WoW Forever · Horde'),el('h2','title','Rosethorn Advisor'),
-      el('p','lead','Dungeon pickups, profession milestones and fishing advice for the character you’re playing and the alts you’re levelling. Works on its own.'));
-    const download=anchor('RosethornAdvisor.zip?v=0.3.3','','cta');
-    download.setAttribute('download','RosethornAdvisor.zip');
-    download.append(icon('download'),el('span','','Download addon'));
-    intro.append(left,download);
-    host.append(intro);
-
-    const cards=el('div','advgrid');
-    const dungeon=el('section','advcard');
-    dungeon.style.gridColumn='1 / -1';
-    dungeon.append(el('h3','','Never miss another dungeon prequest'),
-      el('p','','The icon lights up anywhere in your zone when a tracked dungeon pickup becomes available. Hit level 30 in Undercity’s Trade Quarter? You’ll see Going, Going, Guano! from Faranell in the Apothecarium.'));
-    cards.append(dungeon);
-    const features=[
-      ['Find the quest giver','Tick Mark on map for as many givers as you like. Choose Navigate for an arrow to one. Quests from the same NPC share a pin until you’ve picked them all up.'],
-      ['Spot your next crafting Legacy Point','See which alt is close to 150, 225 or 300 in a craft. Open Professions for the next recipe and an estimate of the materials you’ll need.'],
-      ['Know which alt needs your materials','Before you visit the mailbox, see who can use your ore, leather or cloth. Check each alt’s last recorded profession ranks, bags and bank.'],
-      ['Make a stop while you’re passing','Fish while you wait for the boat at Ratchet or Booty Bay. Leaving the Barrens at Mining 115–124? Get a reminder to mine on the way to 125. Compatible RestedXP routes can trigger these tips.'],
-      ['Find the recipe for the fish you just caught','Catch a Raw Rockscale Cod in Booty Bay? The recipe card sends you to Kelsey Yance in the Old Port Authority, bottom deck, on the left as you enter.'],
-      ['Decide whether to cook or sell your catch','Compare your fishing spots by auction value per cast or per hour. See when selling fish and buying cheaper Cooking ingredients could give you more skill-ups.']
-    ];
-    for(const [title,copy] of features){
-      const card=el('section','advcard');
-      card.append(el('h3','',title),el('p','',copy));
-      cards.append(card);
-    }
-    host.append(cards);
-
-    function details(title, ...children) {
-      const box=el('details','advdet');
-      box.append(el('summary','',title),...children);
-      host.append(box);
-    }
-    const steps=el('ol');
-    for(const line of ['Download and unzip RosethornAdvisor.zip.',
-      'Copy the RosethornAdvisor folder into your WoW Forever Interface/AddOns folder.',
-      'Enable Rosethorn Advisor at character selection. Left-click its icon for suggestions or type /rtg for settings.']){
-      steps.append(el('li','',line));
-    }
-    details('Install the addon',steps);
-    details('Alerts and account-wide settings',
-      el('p','','All current suggestions share one scrollable list. The border glows while alerts are unread. Dismiss a pickup for this visit, snooze alerts for ten minutes, or mute a tip across your characters. You can restore muted tips.'),
-      el('p','','Choose which categories can open the window or pause them in combat. Pick colours and transparency for the text, background, window border and icon glow. Your layout, alerts, snooze, tabs and auction market carry across alts on this installation.'));
-    details('Dungeon coverage and profession tracking',
-      el('p','','The catalogue covers 502 Horde and shared quests and prerequisites. Each pickup shows the required level and colour-coded quest level. Accepting a quest clears the pickup, and completing a prerequisite can reveal the next one. There are verified map locations for 402 quests. In a Spelunker dungeon, the addon reminds you to check final-boss credit.'),
-      el('p','','Browse all 12 professions, plan a profession for an alt and check training caps. The six primary crafts have recipe routes and shopping estimates. Log into each alt and open its bank to update its stock. Open Cooking to record learned recipes. Check the in-game Legacy panel for points earned elsewhere.'));
-    details('Fishing, routes and auction prices',
-      el('p','','While you cast at supported spots, see the Fishing skill needed to avoid escapes, including pole and lure bonuses. Get reminders for training books and nearby recipe vendors. Use your location, choose a destination manually or follow a compatible RestedXP arrow.'),
-      el('p','','Search for an item at the auction house, enter a price yourself or use optional Auctionator quotes. The session estimates gross auction value per hour after five minutes and flags unpriced catches. Raw-versus-cooked comparisons account for ingredients and the auction cut when known.'),
-      el('p','','Spot rankings compare waters you’ve personally fished. Each needs 15 minutes, 10 landed items and complete recent prices for the same market. Value per cast also needs 20 observed casts, including empty ones.'));
-  }
   function render() {
     const id=currentTab();navSelect.value=id;
     for(const [key,link] of navLinks){
       link.classList.toggle('active',id===key);
       if(id===key)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
     }
+    document.body.classList.toggle('wyh-active',id==='advisor');
+    document.title=id==='advisor'?"While You’re Here by Rosethorn | WoW Forever addon":guideTitle;
     page.replaceChildren();
+    if(id==='advisor'){
+      page.className='';page.append(addonPage);return;
+    }
     if(!window.PlannerUI.plan.order.includes(character))character='';
     if(id==='setup'||id==='milestones'){window.PlannerUI.draw(page,id);return;}
     page.className='';
-    const layout=el('div',id==='advisor'?'':'dash');
+    const layout=el('div','dash');
     const pane=el('div','app-pane');
-    if(id!=='advisor'){layout.append(rosterPanel());pane.append(rosterSelect());}
+    layout.append(rosterPanel());pane.append(rosterSelect());
     layout.append(pane);page.append(layout);
     const content=el('div');pane.append(content);
-    if(id==='advisor')advisorView(content);
-    else window.FieldReference.render(content,id,guide,character);
+    window.FieldReference.render(content,id,guide,character);
   }
   window.addEventListener('hashchange',render);
   window.addEventListener('storage',event=>{
-    if(event.key===window.RTGPlan.key || event.key===null){window.PlannerUI.reload();render();}
+    if(event.key===window.WYHPlan.key || event.key===null){window.PlannerUI.reload();render();}
   });
   const sourceDate=new Date(guide.retrieved+'T12:00:00Z');
   if(!Number.isNaN(sourceDate.getTime())){

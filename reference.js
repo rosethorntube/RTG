@@ -216,7 +216,7 @@
           let heading=false;
           for(const {cells,i} of entries(b)){
             if(!matchesRange(cells[1])||!matches([...cells,classLabel(cells[0])])) continue;
-            if(character && classLabel(cells[0])!==character && !(norm(cells[0])==='bsmith' && window.RTGPlan.assigned(window.PlannerUI.plan,character).includes('Blacksmithing'))) continue;
+            if(character && classLabel(cells[0])!==character && !(norm(cells[0])==='bsmith' && window.WYHPlan.assigned(window.PlannerUI.plan,character).includes('Blacksmithing'))) continue;
             if(!heading) {content.append(node('h3','ref-subhead',groupIndex===0?'Dungeon chains':'Level 50 class quests'));heading=true;}
             content.append(questRow(b,i,character,true)); count++;
           }
@@ -230,7 +230,7 @@
   function professions(host,guide,character) {
     title(host,'Professions');
     const tabs=Object.entries(profNames).filter(([id])=>section(guide,id));
-    const defaultProf=(window.RTGPlan.assigned(window.PlannerUI.plan,character).map(s=>s.toLowerCase()).find(s=>tabs.some(([id])=>id===s))) || 'profession-ranks';
+    const defaultProf=(window.WYHPlan.assigned(window.PlannerUI.plan,character).map(s=>s.toLowerCase()).find(s=>tabs.some(([id])=>id===s))) || 'profession-ranks';
     const id=state.profession?.character===character?state.profession.id:defaultProf;
     let active=tabs.some(t=>t[0]===id)?id:tabs[0]?.[0];
     if(!active) {empty(host,'No profession entries available.');return;}
@@ -254,7 +254,7 @@
         }
         show(); return;
       }
-      if(['profession-ranks','first-aid'].includes(active)) {blocks(area,sec.blocks);return;}
+      if(active==='profession-ranks') {blocks(area,sec.blocks);return;}
       for(const b of sec.blocks) {
         if(b.type!=='table') {blocks(area,[b]); continue;}
         for(const row of entries(b)) {

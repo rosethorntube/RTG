@@ -1,7 +1,8 @@
 (() => {
   'use strict';
-  const M=window.RTGPlan;
+  const M=window.WYHPlan;
   let plan=M.load(), editing=plan.order[0], dragged=null, otherOpen=false;
+  let previousSetup=null;
   const expanded=new Set(['Novice']);
   const node=(tag,css,text)=>{const n=document.createElement(tag);if(css)n.className=css;if(text!=null)n.textContent=text;return n;};
   function button(label,css,action) {
@@ -30,7 +31,31 @@
     intro.append(node('h2','title','What are you planning to level?'),node('p','plan-lead','Choose your classes in levelling order and tick two professions for each.'));
     const copy=button('Copy Rosethorn’s setup','plan-alt',()=>{M.copyPreset(plan);editing=plan.order[0];redraw();});
     copy.title='Select all nine classes with Rosethorn’s profession pairs';
-    head.append(intro,copy);host.append(head);
+    if (plan.order.length) previousSetup=null;
+    const actions=node('div');
+    actions.setAttribute('role','group');
+    actions.setAttribute('aria-label','Roster setup');
+    const clear=button(previousSetup?'Undo clear':'Clear','plan-alt',()=>{
+      if (previousSetup) {
+        plan.order=previousSetup.order;
+        plan.jobs=previousSetup.jobs;
+        plan.started=previousSetup.started;
+        editing=previousSetup.editing;
+        previousSetup=null;
+      } else {
+        previousSetup={order:plan.order,jobs:plan.jobs,started:plan.started,editing};
+        plan.order=[];
+        plan.jobs={};
+        plan.started=false;
+        editing=undefined;
+      }
+      redraw(true,'clear-setup');
+    });
+    clear.id='clear-setup';
+    clear.title=previousSetup?'Restore your previous setup':'Clear classes and profession choices. Your recorded milestones are kept.';
+    clear.disabled=!previousSetup && !plan.order.length && !Object.values(plan.jobs).some(jobs=>jobs.length);
+    actions.append(copy,document.createTextNode(' '),clear);
+    head.append(intro,actions);host.append(head);
     const grid=node('div','setup-grid'), roster=node('section','plan-box'), sidebar=node('section','plan-box skill-editor');
     roster.append(node('h3','','Classes & levelling order'));
     const list=node('div','order-list');
@@ -108,10 +133,10 @@
     cell.firstChild.setAttribute('aria-label',cell.title);
   }
   function accountTotal(host,summary,redraw) {
-    const box=node('section','account-lp');box.setAttribute('aria-label','Legacy Points earned on this account');
+    const box=node('section','account-lp');box.setAttribute('aria-label','Legacy Points for the selected roster and shared challenges');
     const main=node('div','account-lp-main'),num=node('strong','earned-number',String(summary.earned));
     const caption=node('div','earned-caption');
-    caption.append(node('b','','LP earned'),node('small','','Recorded in this browser'));
+    caption.append(node('b','','Roster LP'),node('small','','Selected classes and shared challenges'));
     main.append(num,caption);
     const target=plan.goal, goal=node('div','lp-goal');
     if(target>0){
@@ -187,7 +212,7 @@
         }
       }
     }
-    pro.append(skillTable.table,node('p','plan-note','Each crafting tier earns 1 LP once per account. Gathering ticks track skill only.'));
+    pro.append(skillTable.table,node('p','plan-note','Each crafting tier counts once across selected classes, including professions they previously trained. Gathering ticks track skill only.'));
     dun.append(node('h3','','Spelunker dungeons'),node('p','plan-note dungeon-intro','Tick each final boss. Each complete box earns 1 LP.'));
     for(const [group,runs] of M.groups){
       const box=node('details','spelunker');box.open=expanded.has(group);

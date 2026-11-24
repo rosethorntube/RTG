@@ -980,12 +980,20 @@ window.ROSE_GUIDE = {
       "title": "First Aid",
       "blocks": [
         {
-          "type": "p",
-          "text": "Craft bandages: Linen 40 → Heavy Linen 80 → Wool 115 → Heavy Wool 150 → Silk 180 → Heavy Silk 210 → Mageweave 240 → Heavy Mageweave 260 → Runecloth 290 → Heavy Runecloth 300."
+            "type": "table",
+            "rows": [
+              ["Skill", "Farm / bank — additional materials", "Craft → target skill"],
+              ["1–150", "About 175 Linen Cloth and 150 Wool Cloth.", "Linen Bandage to 40 → Heavy Linen Bandage to 80 → Wool Bandage to 115 → Heavy Wool Bandage to 150."],
+              ["150–225", "About 135 Silk Cloth and 20 Mageweave Cloth. In Brackenwall Village, Dustwallow Marsh (36.4, 30.4), buy Expert First Aid – Under Wraps and the Heavy Silk Bandage and Mageweave Bandage manuals from Balai Lok’Wein.", "Silk Bandage to 180 → Heavy Silk Bandage to 210 → Mageweave Bandage to 225."],
+              ["225–300", "About 90 more Mageweave Cloth and 80 Runecloth. Bring both to Doctor Gregory Victor in Hammerfall, Arathi Highlands (73.4, 36.8). At character level 35 and First Aid 225, complete Triage. He teaches the next bandages at 240, 260 and 290.", "Mageweave Bandage to 240 → Heavy Mageweave Bandage to 260 → Runecloth Bandage to 290 → Heavy Runecloth Bandage to 300."]
+            ]
         },
         {
           "type": "p",
-          "text": "Expert book + Heavy Silk / Mageweave manuals: Balai Lok’Wein, Brackenwall, Duskwallow. At level 35 / skill 225: Triage with Doctor Gregory Victor, Hammerfall; return for recipes at 240 / 260 / 290."
+            "text": "Cloth estimates allow for missed skill-ups. First Aid is a secondary profession and earns no crafting Legacy Points. WoW Forever First Aid guide",
+            "links": [
+              {"text": "WoW Forever First Aid guide", "url": "https://www.wowhead.com/forever/guide/professions/first-aid/overview"}
+            ]
         }
       ],
       "sourceHeading": "First Aid"
