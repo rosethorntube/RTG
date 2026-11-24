@@ -119,7 +119,7 @@
   }
   window.addEventListener('hashchange',render);
   window.addEventListener('storage',event=>{
-    if(event.key===window.WYHPlan.key || event.key===null){window.PlannerUI.reload();render();}
+    if(event.key===null || event.key===window.WYHPlan.key || window.WYHPlan.relatedKeys.includes(event.key)){window.PlannerUI.reload();render();}
   });
   const sourceDate=new Date(guide.retrieved+'T12:00:00Z');
   if(!Number.isNaN(sourceDate.getTime())){

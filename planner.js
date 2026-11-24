@@ -24,9 +24,24 @@
   const skillKey = (c,p,n) => 'skill/'+c+'/'+p+'/'+n;
   const dungeonKey = name => 'dungeon/'+name;
   function read(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
+  const relatedKeys = ['rosethorn.fieldguide.v1.character','rosethorn.fieldguide.v1.complete',
+    ...['',...classes].map(c=>'rosethorn.prequests.v1.'+c)];
+  function emptyPlan() {
+    return {order:[],jobs:{},flags:{},started:false,otherLP:0,goal:16};
+  }
+  function savedGuideEntries() {
+    const entries=[];
+    try {
+      for (const key of relatedKeys) {
+        const value=localStorage.getItem(key);
+        if (value!==null) entries.push([key,value]);
+      }
+    } catch {}
+    return entries;
+  }
   function load() {
     const stored = read(key);
-    const p = {order:[], jobs:{}, flags:{}, started:false, otherLP:0, goal:16};
+    const p = emptyPlan();
     if (stored && typeof stored === 'object') {
       p.order = [...new Set(Array.isArray(stored.order)?stored.order:[])].filter(c=>classes.includes(c));
       for (const c of classes) p.jobs[c] = [...new Set(Array.isArray(stored.jobs?.[c])?stored.jobs[c]:[])].filter(s=>professions.includes(s)).slice(0,2);
@@ -62,7 +77,7 @@
     if(pieces[0]==='skill') keys=ranks.filter(n=>done?n<=value:n>=value).map(n=>prefix+n);
     for(const item of keys) {if(done)p.flags[item]=true;else delete p.flags[item];}
   }
-  function available(p) {return p.order.length>0 && p.order.every(c=>assigned(p,c).length===2);}
+  function available(p) {return p.order.length>0;}
   function level(p,c) {return Math.max(1,...levels.filter(n=>p.flags[levelKey(c,n)]));}
   function earned(p,prof,n) {return p.order.some(c=>p.flags[skillKey(c,prof,n)]);}
   function setOtherLP(p,input) {
@@ -162,7 +177,8 @@
   }
   function levelStep(p,c,end) {
     const current=level(p,c);
-    const n=levels.find(n=>n>current && n<=end);
+    const checkpoints=assigned(p,c).length?levels:[5,...lpLevels];
+    const n=checkpoints.find(n=>n>current && n<=end);
     if(!n) return null;
     return {key:levelKey(c,n),title:c+' · '+(n===5?'Reach level 5 and park in an inn':'Reach level '+n),
       why:n===5?'Build rested XP while you play your other characters.':lpLevels.includes(n)?'This class milestone earns 1 LP.':
@@ -217,5 +233,5 @@
     }
     return artisan?.step || null;
   }
-  window.WYHPlan={key,classes,crafts,professions,levels,descriptions,ranks,groups,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,suggestion};
+  window.WYHPlan={key,relatedKeys,emptyPlan,savedGuideEntries,classes,crafts,professions,levels,descriptions,ranks,groups,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,suggestion};
 })();

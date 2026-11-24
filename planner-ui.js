@@ -19,42 +19,64 @@
     host.replaceChildren();host.className='planner';
     const redraw=(save=true,focusId='')=>{
       const y=window.scrollY;
-      if(save)M.save(plan);
+      if (save) {
+        previousSetup=null;
+        M.save(plan);
+      }
       draw(host,view);
       if(focusId)document.getElementById(focusId)?.focus({preventScroll:true});
       window.scrollTo({top:y,behavior:'instant'});
     };
     if(view==='setup')setup(host,redraw);else milestones(host,redraw);
   }
+  function saveReset(next,entries,undo) {
+    const changed=[];
+    try {
+      for (const entry of entries) {
+        const [key,value]=entry;
+        if (undo) localStorage.setItem(key,value); else localStorage.removeItem(key);
+        changed.push(entry);
+      }
+      if (M.save(next)) return true;
+    } catch {}
+    // A quota or privacy error can interrupt a multi-key write. Restore the completed changes.
+    for (const [key,value] of changed.reverse()) {
+      try {
+        if (undo) localStorage.removeItem(key); else localStorage.setItem(key,value);
+      } catch {}
+    }
+    return false;
+  }
   function setup(host,redraw) {
     const head=node('div','plan-head'),intro=node('div');
-    intro.append(node('h2','title','What are you planning to level?'),node('p','plan-lead','Choose your classes in levelling order and tick two professions for each.'));
+    intro.append(node('h2','title','What are you planning to level?'),node('p','plan-lead','Choose your classes in levelling order. You can add up to two professions per class.'));
     const copy=button('Copy Rosethorn’s setup','plan-alt',()=>{M.copyPreset(plan);editing=plan.order[0];redraw();});
     copy.title='Select all nine classes with Rosethorn’s profession pairs';
-    if (plan.order.length) previousSetup=null;
+    const related=M.savedGuideEntries();
+    if (related.length) previousSetup=null;
     const actions=node('div');
     actions.setAttribute('role','group');
     actions.setAttribute('aria-label','Roster setup');
+    const feedback=node('span');
+    feedback.setAttribute('role','status');
     const clear=button(previousSetup?'Undo clear':'Clear','plan-alt',()=>{
-      if (previousSetup) {
-        plan.order=previousSetup.order;
-        plan.jobs=previousSetup.jobs;
-        plan.started=previousSetup.started;
-        editing=previousSetup.editing;
-        previousSetup=null;
-      } else {
-        previousSetup={order:plan.order,jobs:plan.jobs,started:plan.started,editing};
-        plan.order=[];
-        plan.jobs={};
-        plan.started=false;
-        editing=undefined;
+      const snapshot=previousSetup;
+      const next=snapshot?snapshot.plan:M.emptyPlan();
+      if (!saveReset(next,snapshot?snapshot.related:related,!!snapshot)) {
+        feedback.textContent='Your browser could not save this change. Please try again.';
+        return;
       }
-      redraw(true,'clear-setup');
+      previousSetup=snapshot?null:{plan,editing,related};
+      editing=snapshot?snapshot.editing:undefined;
+      plan=next;
+      redraw(false,'clear-setup');
     });
     clear.id='clear-setup';
-    clear.title=previousSetup?'Restore your previous setup':'Clear classes and profession choices. Your recorded milestones are kept.';
-    clear.disabled=!previousSetup && !plan.order.length && !Object.values(plan.jobs).some(jobs=>jobs.length);
-    actions.append(copy,document.createTextNode(' '),clear);
+    clear.title=previousSetup?'Restore your roster and progress':'Reset your roster, professions, all milestones, dungeon checklists and LP.';
+    const hasProgress=plan.order.length || Object.values(plan.jobs).some(jobs=>jobs.length) ||
+      Object.keys(plan.flags).length || plan.otherLP || plan.started || plan.goal!==16 || related.length;
+    clear.disabled=!previousSetup && !hasProgress;
+    actions.append(copy,document.createTextNode(' '),clear,feedback);
     head.append(intro,actions);host.append(head);
     const grid=node('div','setup-grid'), roster=node('section','plan-box'), sidebar=node('section','plan-box skill-editor');
     roster.append(node('h3','','Classes & levelling order'));
@@ -101,8 +123,7 @@
     }else sidebar.append(node('h3','','Professions'),node('p','plan-note','Tick a class to choose its professions.'));
     const next=button('Open my milestones →','cta',()=>{plan.started=true;M.save(plan);go('milestones');});
     next.disabled=!M.available(plan); sidebar.append(next);
-    const incomplete=plan.order.filter(c=>M.assigned(plan,c).length<2);
-    sidebar.append(node('p','plan-note',incomplete.length?'Still to assign: '+incomplete.join(', ')+'.':'Your choices and ticks are saved in this browser.'));
+    sidebar.append(node('p','plan-note','Your choices and ticks are saved in this browser.'));
   }
   function check(key,label,redraw) {
     const c=node('input','plan-check');c.type='checkbox';c.id=key;c.checked=!!plan.flags[key];c.setAttribute('aria-label',label);
@@ -174,7 +195,7 @@
     title.append(node('h2','title','Your milestones'),node('p','plan-lead','Tick your highest level or skill to fill earlier ranks. Gold labels mark Legacy Point rewards.'));
     left.append(title);host.append(left);accountTotal(host,summary,redraw);
     if(!M.available(plan)) {
-      host.append(node('p','plan-lead',plan.order.length?'Finish choosing two professions per class to open your board.':'Choose the classes you want to level to build your milestone board.'),button('Set up my roster','cta',()=>go('setup')));return;
+      host.append(node('p','plan-lead','Choose a class in Setup to open your milestone board.'),button('Set up my roster','cta',()=>go('setup')));return;
     }
     const next=M.suggestion(plan);
     if(next){
@@ -212,7 +233,13 @@
         }
       }
     }
-    pro.append(skillTable.table,node('p','plan-note','Each crafting tier counts once across selected classes, including professions they previously trained. Gathering ticks track skill only.'));
+    if(skillTable.body.children.length){
+      pro.append(skillTable.table,node('p','plan-note','Each crafting tier counts once across selected classes, including professions they previously trained. Gathering ticks track skill only.'));
+    }else{
+      const setupLink=node('a','plan-note','Add professions in Setup');
+      setupLink.href='#setup';
+      pro.append(setupLink);
+    }
     dun.append(node('h3','','Spelunker dungeons'),node('p','plan-note dungeon-intro','Tick each final boss. Each complete box earns 1 LP.'));
     for(const [group,runs] of M.groups){
       const box=node('details','spelunker');box.open=expanded.has(group);
@@ -231,5 +258,5 @@
     }
     const sources=node('a','plan-note','Legacy challenge criteria ↗');sources.href='https://www.wowhead.com/forever/guide/legacy-system-overview-rewards';sources.target='_blank';sources.rel='noopener';dun.append(sources);
   }
-  window.PlannerUI={draw,get plan(){return plan;},reload(){plan=M.load();},defaultTab(){return plan.started && M.available(plan)?'milestones':'setup';}};
+  window.PlannerUI={draw,get plan(){return plan;},reload(){previousSetup=null;plan=M.load();},defaultTab(){return plan.started && M.available(plan)?'milestones':'setup';}};
 })();
