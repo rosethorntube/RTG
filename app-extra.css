@@ -2,20 +2,23 @@
 .app-mobile-nav { display:none; }
 .app-pane { min-width:0; }
 .brandrow .brand img{width:34px;height:34px;border-radius:4px;object-fit:contain}
-.faction-picker{display:inline-flex;align-items:center;gap:8px;color:#c6c8b9;font-size:.83rem}
-.faction-picker select{font:inherit;font-weight:650;color:#f6e9d1;border:1px solid #777362;border-radius:4px;background:#242b27;padding:.4rem .56rem;min-height:36px;cursor:pointer}
-.faction-picker select:focus-visible{outline:2px solid #edd09a;outline-offset:2px}
+.faction-toggle{display:inline-flex;gap:2px;padding:2px;border:1px solid #595c52;border-radius:5px;background:#181d1a}
+.faction-toggle button{display:block;min-height:32px;padding:.32rem .65rem;border:1px solid transparent;border-radius:3px;background:transparent;color:#d3d6ca;font:inherit;font-size:.83rem;font-weight:650;white-space:nowrap}
+.faction-toggle button[aria-pressed="true"]{border-color:#847255;background:#363023;color:#f4dbaf}
+.faction-toggle button[aria-disabled="true"]{color:#a1a59d;cursor:default}
+.faction-toggle button:focus-visible{outline:2px solid #edd09a;outline-offset:-2px}
+.faction-unavailable{position:relative}
+.faction-tooltip{position:absolute;z-index:5;top:100%;right:0;padding:.32rem .55rem;border:1px solid #7c705c;border-radius:4px;background:#191e1b;color:#efe8dc;font-size:.77rem;white-space:nowrap;visibility:hidden}
+.faction-unavailable:hover .faction-tooltip,.faction-unavailable:focus-within .faction-tooltip{visibility:visible}
 .hero h1{max-width:100%}
 .hero p strong{font-weight:600;color:#ede7d5}
-body[data-faction="Alliance"] .faction-picker select{background:#20333f;color:#dbeefa;border-color:#738b98}
 .wyh .wyh-release,.wyh .wyh-coverage{font-size:.85rem;color:#c1c7b5;margin-top:.75rem}
 @media(max-width:670px){
   .headlinks{gap:8px}
-  .faction-picker>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
   .brandrow .brand img{width:28px;height:28px}
   .hero h1{font-size:clamp(2.8rem,9.1vw,4.1rem)}
 }
-@media(max-width:380px){.brand-sub{display:none}.brand>span{font-size:.8rem}.brandrow .brand img{width:24px;height:24px}.faction-picker select{padding-inline:.25rem}}
+@media(max-width:380px){.brand-sub{display:none}.brand>span{font-size:.8rem}.brandrow .brand img{width:24px;height:24px}.faction-toggle button{padding-inline:.33rem;font-size:.78rem}}
 .source-date { order:1; }
 .foot a { order:2; }
 @media(max-width:670px) {

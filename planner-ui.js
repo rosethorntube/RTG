@@ -49,7 +49,7 @@
   }
   function setup(host,redraw) {
     const head=node('div','plan-head'),intro=node('div');
-    intro.append(node('h2','title','Plan your '+window.GuideFaction.name+' roster'),node('p','plan-lead','Choose classes in levelling order and up to two professions each. Each faction has its own saved plan.'));
+    intro.append(node('h2','title','Plan your character roster'),node('p','plan-lead','Choose classes in levelling order and up to two professions each.'));
     const copy=button('Copy Rosethorn’s setup','plan-alt',()=>{M.copyPreset(plan);editing=plan.order[0];redraw();});
     copy.title='Select all nine classes with Rosethorn’s profession pairs';
     const related=M.savedGuideEntries();

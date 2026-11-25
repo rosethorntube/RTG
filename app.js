@@ -57,8 +57,16 @@
     return tabs.some(([id])=>id===raw)?raw:window.PlannerUI.defaultTab();
   }
   function switchTo(id) {if(currentTab()!==id)location.hash=id;}
-  const factionSelect=document.getElementById('faction');
-  factionSelect.addEventListener('change',()=>window.GuideFaction.select(factionSelect.value));
+  const factionButtons=document.querySelectorAll('#faction button[data-faction]');
+  for(const button of factionButtons) {
+    button.addEventListener('click',()=>{
+      if(button.getAttribute('aria-disabled')==='true') {
+        button.focus({preventScroll:true});
+        return;
+      }
+      window.GuideFaction.select(button.dataset.faction);
+    });
+  }
   document.querySelector('a.skip').addEventListener('click',event=>{
     event.preventDefault();
     const main=document.getElementById('main');
@@ -102,7 +110,7 @@
   function render() {
     const id=currentTab();navSelect.value=id;
     const faction=window.GuideFaction;
-    factionSelect.value=faction.name;
+    for(const button of factionButtons)button.setAttribute('aria-pressed',String(button.dataset.faction===faction.name));
     document.body.dataset.faction=faction.name;
     const count=window.WYHDungeonQuests?.dungeons.filter(d=>Array.isArray(d[faction.name])).length;
     const counter=document.getElementById('dcount');
@@ -116,7 +124,7 @@
       if(id===key)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
     }
     document.body.classList.toggle('wyh-active',id==='advisor');
-    document.title=(id==='advisor'?"While You're Here":tabs.find(([key])=>id===key)[1])+' · '+faction.name+' | '+guideTitle;
+    document.title=(id==='advisor'?"While You're Here":tabs.find(([key])=>id===key)[1])+' | '+guideTitle;
     page.replaceChildren();
     if(id==='advisor'){
       page.className='';page.append(addonPage);return;

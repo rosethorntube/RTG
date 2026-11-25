@@ -1,8 +1,12 @@
 (() => {
   'use strict';
   const preference = 'rosethorn.fieldguide.faction';
+  const available = new Set(['Horde']);
   function saved() {
-    try { return localStorage.getItem(preference) === 'Alliance' ? 'Alliance' : 'Horde'; }
+    try {
+      const faction = localStorage.getItem(preference);
+      return available.has(faction) ? faction : 'Horde';
+    }
     catch { return 'Horde'; }
   }
   let name = saved();
@@ -12,7 +16,7 @@
     get alliance() { return name === 'Alliance'; },
     storageKey(key) { return name === 'Alliance' ? key + '.alliance' : key; },
     select(next) {
-      if (!['Alliance', 'Horde'].includes(next) || next === name) return;
+      if (!available.has(next) || next === name) return;
       name = next;
       try { localStorage.setItem(preference, name); } catch {}
       window.dispatchEvent(new Event('guidefactionchange'));
