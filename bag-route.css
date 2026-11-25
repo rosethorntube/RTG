@@ -1,0 +1,52 @@
+.bag-route {
+  min-width: 0;
+  align-self: start;
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--gold);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.bag-route summary { cursor: pointer; }
+.bag-route summary:focus-visible, .bag-route input:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+.bag-summary {
+  position: relative;
+  display: block;
+  list-style: none;
+  padding: .85rem 2rem .85rem 1rem;
+}
+.bag-route summary::-webkit-details-marker { display: none; }
+.bag-summary::after,.bag-step-title::after {
+  content: '';
+  position: absolute;
+  width: .45rem;
+  height: .45rem;
+  border-right: 1px solid var(--gold);
+  border-bottom: 1px solid var(--gold);
+  transform: rotate(45deg);
+}
+.bag-summary::after { right: 1rem; top: 1.18rem; }
+.bag-panel[open] > .bag-summary::after,.bag-directions[open] > .bag-step-title::after {
+  transform: rotate(225deg);
+}
+.bag-summary h2 { margin: 0; color: var(--paper); font: 600 1.4rem/1.12 Crimson, Georgia, serif; }
+.bag-status,.bag-when { display: block; color: var(--gold); font-size: .79rem; line-height: 1.4; }
+.bag-status { margin-top: .35rem; }
+.bag-body { padding: 0 1rem 1rem; }
+.bag-intro,.bag-instruction { color: var(--paper); font-size: .85rem; line-height: 1.45; }
+.bag-intro { margin: 0 0 .65rem; }
+.bag-stops { list-style: none; padding: 0; margin: 0; }
+.bag-stop { padding: .66rem 0; border-top: 1px solid var(--line); }
+.bag-step-line { display: grid; grid-template-columns: 1.1rem minmax(0,1fr); align-items: start; gap: .45rem; }
+.bag-check { margin: .18rem 0 0; width: 1rem; height: 1rem; accent-color: var(--gold); cursor: pointer; }
+.bag-check:checked + .bag-directions .bag-step-title strong { color: var(--muted); }
+.bag-step-title { display: block; position: relative; padding-right: .95rem; color: var(--paper); font-size: .95rem; line-height: 1.3; }
+.bag-step-title::after { top: .34rem; right: .15rem; width: .34rem; height: .34rem; }
+.bag-when { color: var(--muted); }
+.bag-instruction { margin: .5rem 0 0; }
+.bag-source { display: inline-block; margin-top: .5rem; color: var(--gold); font-size: .8rem; }
+@media (max-width:670px) {
+  .bag-route { margin-bottom: 1rem; }
+}

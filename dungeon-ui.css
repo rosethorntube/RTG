@@ -1,0 +1,59 @@
+.dungeon-guide { min-width:0; }
+.dungeon-guide .ref-title { margin-bottom:.4rem; }
+.dungeon-guide .dq-intro { max-width:75ch; margin-bottom:1.15rem; }
+.dq-tools .ref-field { flex:1 1 11rem; min-width:0; }
+.dq-tools .dq-run-select { flex:2 1 17rem; }
+.dq-tools select { text-overflow:ellipsis; }
+.dq-run { min-width:0; }
+.dq-search-result { display:flex; flex-wrap:wrap; gap:.35rem 1rem; align-items:center; margin:-.45rem 0 .85rem; color:var(--r-muted); font-size:.86rem; }
+.dq-search-result[hidden],.dq-jump[hidden] { display:none; }
+.dq-jump { background:transparent; padding:.2rem 0; border:0; font:inherit; color:#ead19d; text-decoration:underline; cursor:pointer; }
+.dq-run-head { display:flex; gap:.8rem 1.2rem; align-items:center; justify-content:space-between; flex-wrap:wrap; padding:.85rem 0 .65rem; border-top:1px solid var(--r-line); }
+.dq-heading,.dq-group-title,.dq-family-title { margin:0; text-wrap:pretty; }
+.dq-heading { color:#f6eedc; font:500 clamp(1.65rem,3vw,2.1rem)/1.12 'Crimson Text',Georgia,serif; }
+.dq-run-level,.dq-progress,.dq-coverage { font-size:.88rem; line-height:1.45; }
+.dq-run-level { margin:.22rem 0 0; color:#dcc494; }
+.dq-progress { color:var(--r-muted); white-space:nowrap; }
+.dq-coverage { color:var(--r-muted); margin:.1rem 0 .8rem; }
+.dq-archive { margin:1rem 0; font-size:.9rem; color:var(--r-muted); }
+.dq-archive summary { cursor:pointer; color:#dfc89c; }
+.dq-archive p,.dq-archive ul { margin:.45rem 0; }
+.dq-sources { display:inline-block; margin-top:.35rem; color:var(--r-muted); font-size:.85rem; text-underline-offset:2px; }
+.dq-group { margin:.95rem 0 1.4rem; }
+.dq-group-title { color:#f4e9d0; font:600 1.25rem/1.25 'DM Sans',sans-serif; margin:0 0 .5rem; }
+.dq-family { padding:.75rem .85rem .12rem; background:var(--r-panel); border:1px solid var(--r-line); border-radius:6px; margin:.35rem 0 .65rem; }
+.dq-family-title { color:#dfc18b; font:600 1.06rem/1.35 'DM Sans',sans-serif; }
+.dq-chain,.dq-direct { list-style:none; padding:0; margin:0; }
+.dq-direct { border-top:1px solid var(--r-line); }
+.dq-quest { position:relative; display:grid; grid-template-columns:1.55rem minmax(0,1fr); column-gap:.5rem; padding:.6rem .12rem; border-bottom:1px solid var(--r-line); color:#f0ecdf; }
+.dq-family .dq-quest:last-child { border-bottom:0; }
+.dq-quest.dq-match { background-color:#2b3025; box-shadow:inset 2px 0 #cfa969; }
+.dq-chain { counter-reset:step; }
+.dq-chain .dq-quest { counter-increment:step; }
+.dq-chain .dq-quest-meta::before { content:counter(step) ". "; }
+.dq-check-hit { display:flex; align-items:flex-start; justify-content:center; cursor:pointer; min-height:32px; padding-top:.12rem; position:relative; }
+.dq-check { appearance:auto; accent-color:#d8b16f; width:17px; height:17px; flex-shrink:0; margin:0; cursor:pointer; position:relative; z-index:1; }
+.dq-chain .dq-quest:not(:last-child) .dq-check-hit::after { content:''; width:1px; background:#4b5145; position:absolute; top:1.55rem; bottom:-.70rem; left:50%; }
+.dq-quest-info { min-width:0; }
+.dq-quest-heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:.12rem .75rem; }
+.dq-name { font-weight:650; color:#f1e9d6; overflow-wrap:anywhere; text-decoration:none; }
+.dq-name[href]:hover { text-decoration:underline; }
+.dq-complete .dq-name { text-decoration:line-through; color:#afb4a6; }
+.dq-sharing { display:inline-block; text-decoration:none; font-weight:600; font-size:.8rem; line-height:1.4; color:#c0c5b3; }
+.dq-sharing[data-sharing=true] { color:#addbb3; }
+.dq-sharing[data-sharing=false] { color:#e8c394; }
+.dq-sharing[href]:hover { text-decoration:underline; }
+.dq-quest-meta,.dq-place,.dq-relation,.dq-note,.dq-restriction { margin:.1rem 0 0; font-size:.89rem; line-height:1.46; overflow-wrap:anywhere; }
+.dq-quest-meta { font-size:.79rem; color:#c1b695; }
+.dq-place { color:#deded2; }
+.dq-relation,.dq-note,.dq-restriction { color:#c7cabb; }
+.dq-restriction { font-weight:600; }
+@media(max-width:670px) {
+  .dq-tools .dq-run-select { flex-basis:100%; }
+  .dq-tools { gap:.6rem; }
+  .dq-family { padding:.6rem .55rem 0; }
+  .dq-quest { column-gap:.32rem; }
+  .dq-group-title { font-size:1.14rem; }
+  .dq-group { margin-bottom:1.05rem; }
+}
+

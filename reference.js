@@ -11,10 +11,11 @@
   const table = (section) => section?.blocks.find(b => b.type === 'table');
   const entries = (t) => (t?.rows || []).slice(1).map((cells, i) => ({cells, i:i+1}));
   const section = (guide, id) => guide.sections.find(item => item.id === id);
-  const state = { dungeonTab:'levels', dungeonRange:'0', query:'', profession:null, vendor:'all', fish:{}, read:'intro' };
+  const state = { profession:null, vendor:'all', read:'intro' };
+  window.addEventListener('guidefactionchange',()=>{
+    state.vendor='all';state.profession=null;state.read='intro';
+  });
   const validClass = name => ['Priest','Warrior','Druid','Hunter','Mage','Shaman','Warlock','Paladin','Rogue'].find(c=>norm(c)===norm(name)) || '';
-  const classAlias = {warr:'Warrior',pala:'Paladin',lock:'Warlock',sham:'Shaman',bsmith:'Blacksmithing'};
-  const classLabel = value => classAlias[norm(value)] || value;
   function addText(dest, raw, links, highlights) {
     const text = s(raw);
     const ranges = [];
@@ -114,136 +115,51 @@
   }
   function title(host, name) {host.append(node('h2','ref-title',name));}
   function empty(host, text) {host.append(node('p','ref-empty',text));}
-  function getChecks(character) {
-    try {
-      const found = JSON.parse(localStorage.getItem('rosethorn.prequests.v1.'+character) || '[]');
-      return new Set(Array.isArray(found)?found:[]);
-    } catch {return new Set();}
-  }
-  function questCheck(character,id) {
-    const label=node('label','ref-tick');
-    const check=node('input'); check.type='checkbox'; 
-    check.checked=getChecks(character).has(id);
-    check.addEventListener('change',()=>{
-      const checked=getChecks(character);
-      if(check.checked) checked.add(id); else checked.delete(id);
-      try {localStorage.setItem('rosethorn.prequests.v1.'+character,JSON.stringify([...checked]));} catch {}
-    });
-    label.append(check,node('span','','Mark complete'+(character?' for '+character:'')));
-    return label;
-  }
-  const aliases = [
-    ['Ragefire','RFC'],['Ruins','Ruins'],['Wailing','WC'],['Blackfathom','BFD'],
-    ['Excavation','Excavation'],['Library','SM Library|SM'],['Scarlet Monastery','SM'],
-    ['Gnomeregan','Gnomeregan'],['Razorfen Kraul','RFK'],['Razorfen Downs','RFD'],
-    ['City of Dalaran','Dalaran'],['Drowned City','Drowned City'],['Krol','Krol dok'],
-    ['Uldaman','Uldaman'],['Zul','ZF'],['Maraudon','Maraudon'],['Sunken Temple','ST|Sunken Temple'],
-    ['Blackmaw','Blackmaw'],['Alcaz','Alcaz'],['Blackrock Depths','BRD'],['Scholomance','Scholomance'],
-    ['Lower Blackrock','LBRS'],['Upper Blackrock','UBRS'],['Dire Maul (DM) — East','Dire Maul East'],['Stratholme','Stratholme']
-  ];
-  function associated(dungeon, target) {
-    const match=aliases.find(([name])=>norm(dungeon).includes(norm(name)));
-    if(!match) return false;
-    const scope=' '+norm(s(target).split(':')[0])+' ';
-    return match[1].split('|').some(key=>scope.includes(' '+norm(key)+' ')) ||
-      (norm(dungeon).includes('krol') && scope.includes('krol'));
-  }
-  function questRow(block, i, character, grouped=false) {
-    const row = block.rows[i];
-    const name = s(row[2]).split(/\s[—–]\s/)[0];
-    return disclosure(name,grouped ? 'Level '+row[1] : 'Start '+row[0], content=>{
-      const p=node('p','ref-copy');
-      txtCell(block,i,2,p);
-      content.append(p);
-      if(!grouped) {
-        const sub=node('p','ref-copy');
-        txtCell(block,i,3,sub);
-        content.append(sub,node('div','ref-min','Minimum quest level '+row[1]));
-      } else content.append(node('div','ref-min',classLabel(row[0])));
-      content.append(questCheck(character,norm(row[2])));
-    });
-  }
-  const recommended = s => {
-    const vals=String(s).match(/\d+/g) || [];
-    return vals.length ? [Number(vals[0]),Number(vals[1]||vals[0])] : [];
-  };
-  function matchesRange(level) {
-    if(state.dungeonRange === '0') return true;
-    const a = Number(state.dungeonRange), [low,high]=recommended(level);
-    return low<=a+9 && high>=a;
-  }
-  function dungeons(host, guide, character) {
-    title(host,'Dungeon guide');
-    const levelBlock=table(section(guide,'dungeons'));
-    const pre=section(guide,'prequests')?.blocks.filter(b=>b.type==='table') || [];
-    const toolbar=node('div','ref-tools'), content=node('div','ref-results');
-    const filters=[['levels','Dungeon runs'],['prequests','Quest chains'],['class','Class & profession quests']];
-    const focus=field('Show',filters,state.dungeonTab,val=>{state.dungeonTab=val; refresh();});
-    const levels=field('Character levels',[['0','All levels'],['10','10–19'],['20','20–29'],['30','30–39'],['40','40–49'],['50','50–59'],['60','60']],state.dungeonRange,val=>{state.dungeonRange=val;refresh();});
-    const label=node('label','ref-field ref-wide'); label.append(node('span','ref-field-label','Search'));
-    const input=node('input','ref-search'); input.type='search'; input.value=state.query; 
-    input.placeholder='Dungeon, quest or pickup'; input.addEventListener('input',()=>{state.query=input.value;refresh();});
-    label.append(input); toolbar.append(focus,levels,label); host.append(toolbar,content);
-    const matches=(cells)=>norm(cells.join(' ')).includes(norm(state.query));
-    function refresh() {
-      content.replaceChildren(); let count=0;
-      if(state.dungeonTab==='levels') {
-        content.append(node('p','ref-context','Levels are the guide’s recommendations for a run. Quest chains can start earlier.'));
-        for(const {cells,i} of entries(levelBlock)) {
-          if(!matchesRange(cells[1])) continue;
-          const qs=entries(pre[0]).filter(p=>associated(cells[0],p.cells[3]));
-          if(!matches([...cells,...qs.flatMap(q=>q.cells)])) continue;
-          const notes=cells[2]?.trim();
-          if(!notes && !qs.length) {
-            const row=node('div','ref-static');
-            row.append(node('span','ref-summary-title',cells[0]), node('span','ref-meta','Level '+cells[1]));
-            content.append(row);
-          } else {
-            content.append(disclosure(cells[0],'Level '+cells[1],body=>{
-              if(notes) {const p=node('p','ref-copy');body.append(txtCell(levelBlock,i,2,p));}
-              for(const q of qs) body.append(questRow(pre[0],q.i,character));
-            }));
-          }
-          count++;
-        }
-      } else if(state.dungeonTab==='prequests' && pre[0]) {
-        content.append(node('p','ref-context','Start is the recommended level to begin the chain. Expand a quest for its minimum pickup level and next steps.'));
-        for(const {cells,i} of entries(pre[0])) {
-          if(matchesRange(cells[0]) && matches(cells)) {content.append(questRow(pre[0],i,character));count++;}
-        }
-      } else if(state.dungeonTab==='class'){
-        for(const [groupIndex,b] of pre.slice(1).entries()) {
-          let heading=false;
-          for(const {cells,i} of entries(b)){
-            if(!matchesRange(cells[1])||!matches([...cells,classLabel(cells[0])])) continue;
-            if(character && classLabel(cells[0])!==character && !(norm(cells[0])==='bsmith' && window.WYHPlan.assigned(window.PlannerUI.plan,character).includes('Blacksmithing'))) continue;
-            if(!heading) {content.append(node('h3','ref-subhead',groupIndex===0?'Dungeon chains':'Level 50 class quests'));heading=true;}
-            content.append(questRow(b,i,character,true)); count++;
-          }
+  function vendorDetour() {
+    return disclosure('Is the vendor trip worth it?', '', body=>{
+      body.append(node('p','ref-context','Use the actual price you would pay for one book or recipe. Compare only the extra travel time this purchase adds.'));
+      const fields=node('div','ref-tools'), result=node('p','ref-copy');
+      result.setAttribute('role','status');
+      function amount(label,placeholder) {
+        const wrapper=node('label','ref-field'), input=node('input','ref-search');
+        input.type='number';input.min='0';input.step='any';input.placeholder=placeholder;
+        input.addEventListener('input',update);
+        wrapper.append(node('span','ref-field-label',label),input);fields.append(wrapper);
+        return input;
+      }
+      const vendor=amount('Vendor (silver)','e.g. 100'), auction=amount('AH (silver)','e.g. 120'), rate=amount('Your gold per hour','e.g. 6');
+      function update() {
+        const values=[vendor,auction,rate].map(input=>input.value===''?NaN:Number(input.value));
+        const [v,a,r]=values;
+        if(!values.every(Number.isFinite)||v<0||a<0||r<=0)result.textContent='Enter both prices and a positive hourly rate.';
+        else if(a<=v)result.textContent=a===v?'Same price. Buy wherever you already are.':'The AH is already cheaper by '+Number((v-a).toFixed(2))+'s.';
+        else {
+          const seconds=(a-v)*36/r;
+          const limit=seconds<60?Math.max(1,Math.round(seconds))+' sec':Number((seconds/60).toFixed(1))+' min';
+          result.textContent='The AH costs '+Number((a-v).toFixed(2))+'s extra. If the vendor detour takes longer than '+limit+', the AH is better value at your rate.';
         }
       }
-      if(!count) empty(content,'No matches for these filters. Choose another level range or clear the search.');
-    }
-    refresh();
+      body.append(fields,result);update();
+    });
   }
-  const profNames = {'profession-ranks':'Training ranks','blacksmithing':'Blacksmithing','engineering':'Engineering','leatherworking':'Leatherworking','tailoring':'Tailoring','enchanting':'Enchanting','alchemy':'Alchemy','first-aid':'First Aid','vendors':'Vendor shopping list'};
-  function professions(host,guide,character) {
-    title(host,'Professions');
-    const tabs=Object.entries(profNames).filter(([id])=>section(guide,id));
-    const defaultProf=(window.WYHPlan.assigned(window.PlannerUI.plan,character).map(s=>s.toLowerCase()).find(s=>tabs.some(([id])=>id===s))) || 'profession-ranks';
-    const id=state.profession?.character===character?state.profession.id:defaultProf;
-    let active=tabs.some(t=>t[0]===id)?id:tabs[0]?.[0];
-    if(!active) {empty(host,'No profession entries available.');return;}
-    const toolbar=node('div','ref-tools'), area=node('div','ref-content');
-    toolbar.append(field('Profession or reference',tabs,active,val=>{active=val;state.profession={id:val,character};refresh();}));
-    host.append(toolbar,area);
-    function refresh() {
-      const sec=section(guide,active); area.replaceChildren();
+  const secondarySkills = ['Cooking','First Aid','Fishing'];
+  const professionId = name => name.toLowerCase().replace(/ /g,'-');
+
+  function renderProfession(area,guide,active) {
+    const gatheringName=Object.keys(window.WYHGathering).find(name=>professionId(name)===active);
+    if(gatheringName) {
+      const route=window.WYHGathering[gatheringName][window.GuideFaction.name];
+      if(active==='skinning') area.append(node('p','ref-copy','Loot each beast before skinning. Below skill 100 you can skin beasts up to level 10 plus one per 10 skill. From 100, divide your effective skill by five and round down.'));
+      area.append(makeTable({rows:[['Skill','What to gather','Where to go'],...route]}));
+      return;
+    }
+    const sec=section(guide,active);
+    if(!sec) return;
       if(active==='vendors') {
         const block=table(sec), rows=entries(block);
         const options=[['all','All locations'],...rows.map(r=>[String(r.i),r.cells[0]])];
         const out=node('div','ref-results'); const select=field('Location',options,state.vendor,val=>{state.vendor=val;show();});
-        const inner=node('div','ref-tools'); inner.append(select);area.append(inner,out);
+        const inner=node('div','ref-tools'); inner.append(select);area.append(inner,vendorDetour(),out);
         function show() {
           out.replaceChildren();
           for(const r of rows) {
@@ -254,7 +170,13 @@
         }
         show(); return;
       }
-      if(active==='profession-ranks') {blocks(area,sec.blocks);return;}
+      if(['profession-ranks','fishing','cooking'].includes(active)) {
+        blocks(area,sec.blocks);
+        if(active==='cooking'||active==='fishing') {
+          const link=node('a','ref-link','Open Fishing & Cooking');link.href='#fishing';area.append(link);
+        }
+        return;
+      }
       for(const b of sec.blocks) {
         if(b.type!=='table') {blocks(area,[b]); continue;}
         for(const row of entries(b)) {
@@ -266,8 +188,32 @@
           },row.i===1));
         }
       }
+  }
+  function professions(host,guide,character) {
+    title(host,character ? character+' professions' : 'Professions');
+    const plan=window.PlannerUI.plan;
+    if(character) {
+      const assigned=window.WYHPlan.assigned(plan,character);
+      if(!assigned.length) {
+        const line=node('p','ref-empty','No primary professions assigned to this '+character+'. ');
+        const setup=node('a','','Choose professions in Setup');setup.href='#setup';line.append(setup);host.append(line);
+        return;
+      }
+      for(const name of assigned) host.append(disclosure(name,'',area=>renderProfession(area,guide,professionId(name))));
+      return;
     }
-    refresh();
+    const all=[...window.WYHPlan.professions,...secondarySkills].sort();
+    const entries=all.map(name=>[professionId(name),name]);
+    entries.push(['profession-ranks','Training ranks'],['vendors','Vendor shopping list']);
+    let active=entries.some(([id])=>id===state.profession)?state.profession:'profession-ranks';
+    const area=node('div','ref-content'), tools=node('div','ref-tools');
+    function show(id) {
+      active=id;state.profession=id;
+      area.replaceChildren();
+      renderProfession(area,guide,id);
+    }
+    tools.append(field('Profession or reference',entries,active,show));
+    host.append(tools,area);show(active);
   }
   const catchNames={
     'Brilliant Smallfish':[55,'Brilliant Smallfish'],
@@ -293,26 +239,39 @@
     sheendra: ['Sheendra Tallgrass', 'Camp Mojache, Feralas (74.5, 42.7). Look for the trade supplies vendor inside the Horde camp.', 'https://bindonforever.com/npc/8145']
   };
   const catches = [
-    {fish:'Raw Rockscale Cod',meal:'Rockscale Cod',levels:[175,190,210,230],seller:'kelsey',price:'22s',buff:'+12 Fishing for 15 minutes',source:'https://www.foreverdb.app/en/forever/items/4594/rockscale-cod'},
-    {fish:'Raw Brilliant Smallfish',meal:'Brilliant Smallfish',levels:[1,45,65,85],seller:'harn',price:'40c',buff:'+2 attack power'},
-    {fish:'Raw Slitherskin Mackerel',meal:'Slitherskin Mackerel',levels:[1,45,65,85],seller:'zansoa',price:'40c',buff:'+6 attack power'},
-    {fish:'Raw Longjaw Mud Snapper',meal:'Longjaw Mud Snapper',levels:[50,90,110,130],seller:'harn',price:'4s',buff:'+10 attack power'},
-    {fish:'Raw Rainbow Fin Albacore',meal:'Rainbow Fin Albacore',levels:[50,90,110,130],seller:'zansoa',price:'4s',buff:'+1 spell damage'},
-    {fish:'Raw Sagefish',meal:'Smoked Sagefish',levels:[80,120,140,160],seller:'kelsey',price:'5s',extra:'Mild Spices',buff:'+4 spell damage'},
-    {fish:'Raw Bristle Whisker Catfish',meal:'Bristle Whisker Catfish',levels:[100,140,160,180],seller:'kilxx',price:'12s',buff:'+8 Fishing'},
-    {fish:'Raw Mithril Head Trout',meal:'Mithril Head Trout',levels:[175,215,235,255],seller:'kelsey',price:'22s',buff:'+20 attack power'},
-    {fish:'Raw Greater Sagefish',meal:'Sagefish Delight',levels:[175,215,235,255],seller:'kelsey',price:'50s',extra:'Hot Spices',buff:'+7 spell damage'},
-    {fish:'Raw Spotted Yellowtail',meal:'Spotted Yellowtail',levels:[225,265,285,305],seller:'gikkix',price:'1g 60s',buff:'+22 spell damage'},
-    {fish:'Raw Glossy Mightfish',meal:'Cooked Glossy Mightfish',levels:[225,265,285,305],seller:'kelsey',price:'1g 60s',extra:'Soothing Spices',buff:'+30 attack power'},
-    {fish:'Raw Nightfin Snapper',meal:'Nightfin Soup',levels:[250,290,310,330],seller:'gikkix',price:'2g',extra:'Refreshing Spring Water',buff:'+22 spell damage'},
-    {fish:'Raw Redgill',meal:'Filet of Redgill',levels:[225,265,285,305],seller:'kelsey',price:'1g 60s',buff:'+18 Fishing'},
-    {fish:'Raw Sunscale Salmon',meal:'Poached Sunscale Salmon',levels:[250,290,310,330],seller:'gikkix',price:'2g',buff:'+40 attack power',station:'an Iron Oven',source:'https://www.wowhead.com/forever/spell=18244/poached-sunscale-salmon'},
-    {fish:'Raw Whitescale Salmon',meal:'Baked Salmon',levels:[275,315,335,355],seller:'sheendra',price:'2g',extra:'Soothing Spices',buff:'+28 spell damage',station:'an Iron Oven',source:'https://www.wowhead.com/forever/spell=18247/baked-salmon'},
-    {fish:'Large Raw Mightfish',meal:'Mightfish Steak',levels:[275,315,335,355],seller:'sheendra',price:'2g',extra:'Hot Spices + 1 Soothing Spices',buff:'+40 attack power',station:'an Iron Oven',source:'https://www.wowhead.com/forever/spell=18246/mightfish-steak'},
+    {fish:'Raw Rockscale Cod',meal:'Rockscale Cod',auctionRecipe:6369,levels:[175,190,210,230],seller:'kelsey',price:'22s',buff:'+12 Fishing for 15 minutes',source:'https://www.foreverdb.app/en/forever/items/4594/rockscale-cod'},
+    {fish:'Raw Brilliant Smallfish',meal:'Brilliant Smallfish',auctionRecipe:6325,levels:[1,45,65,85],seller:'harn',price:'40c',buff:'+2 attack power'},
+    {fish:'Raw Slitherskin Mackerel',meal:'Slitherskin Mackerel',auctionRecipe:6326,levels:[1,45,65,85],seller:'zansoa',price:'40c',buff:'+6 attack power'},
+    {fish:'Raw Longjaw Mud Snapper',meal:'Longjaw Mud Snapper',auctionRecipe:6328,levels:[50,90,110,130],seller:'harn',price:'4s',buff:'+10 attack power'},
+    {fish:'Raw Rainbow Fin Albacore',meal:'Rainbow Fin Albacore',auctionRecipe:6368,levels:[50,90,110,130],seller:'zansoa',price:'4s',buff:'+1 spell damage'},
+    {fish:'Raw Sagefish',meal:'Smoked Sagefish',auctionRecipe:21099,levels:[80,120,140,160],seller:'kelsey',price:'5s',extra:'Mild Spices',buff:'+4 spell damage'},
+    {fish:'Raw Bristle Whisker Catfish',meal:'Bristle Whisker Catfish',auctionRecipe:6330,levels:[100,140,160,180],seller:'kilxx',price:'12s',buff:'+8 Fishing'},
+    {fish:'Raw Mithril Head Trout',meal:'Mithril Head Trout',auctionRecipe:17062,levels:[175,215,235,255],seller:'kelsey',price:'22s',buff:'+20 attack power'},
+    {fish:'Raw Greater Sagefish',meal:'Sagefish Delight',auctionRecipe:21219,levels:[175,215,235,255],seller:'kelsey',price:'50s',extra:'Hot Spices',buff:'+7 spell damage'},
+    {fish:'Raw Spotted Yellowtail',meal:'Spotted Yellowtail',auctionRecipe:13939,levels:[225,265,285,305],seller:'gikkix',price:'1g 60s',buff:'+22 spell damage'},
+    {fish:'Raw Glossy Mightfish',meal:'Cooked Glossy Mightfish',auctionRecipe:13940,levels:[225,265,285,305],seller:'kelsey',price:'1g 60s',extra:'Soothing Spices',buff:'+30 attack power'},
+    {fish:'Raw Nightfin Snapper',meal:'Nightfin Soup',auctionRecipe:13945,levels:[250,290,310,330],seller:'gikkix',price:'2g',extra:'Refreshing Spring Water',buff:'+22 spell damage'},
+    {fish:'Raw Redgill',meal:'Filet of Redgill',auctionRecipe:13941,levels:[225,265,285,305],seller:'kelsey',price:'1g 60s',buff:'+18 Fishing'},
+    {fish:'Raw Sunscale Salmon',meal:'Poached Sunscale Salmon',auctionRecipe:13946,levels:[250,290,310,330],seller:'gikkix',price:'2g',buff:'+40 attack power',station:'an Iron Oven',source:'https://www.wowhead.com/forever/spell=18244/poached-sunscale-salmon'},
+    {fish:'Raw Whitescale Salmon',meal:'Baked Salmon',auctionRecipe:13949,levels:[275,315,335,355],seller:'sheendra',price:'2g',extra:'Soothing Spices',buff:'+28 spell damage',station:'an Iron Oven',source:'https://www.wowhead.com/forever/spell=18247/baked-salmon'},
+    {fish:'Large Raw Mightfish',meal:'Mightfish Steak',auctionRecipe:13948,levels:[275,315,335,355],seller:'sheendra',price:'2g',extra:'Hot Spices + 1 Soothing Spices',buff:'+40 attack power',station:'an Iron Oven',source:'https://www.wowhead.com/forever/spell=18246/mightfish-steak'},
     {fish:'Oily Blackmouth',meal:'Blackmouth Oil',alchemy:'2 Oily Blackmouth + 1 Empty Vial make 1 Blackmouth Oil.'},
     {fish:'Firefin Snapper',meal:'Fire Oil',alchemy:'2 Firefin Snapper + 1 Empty Vial make 2 Fire Oil.'}
   ];
   const lookup = { fish:'Raw Rockscale Cod', skill:'180', search:'' };
+  const allianceCooking='https://www.wowhead.com/forever/guide/professions/cooking/overview-leveling';
+  const allianceSellers={
+    6325:['Catherine Leland','Trade District dock, Stormwind (55.0, 69.6).',allianceCooking],
+    6328:['Tharynn Bouden','Goldshire, Elwynn Forest (41.8, 67.0).',allianceCooking],
+    6330:['Catherine Leland','Trade District dock, Stormwind (55.0, 69.6).',allianceCooking],
+    6326:['Nessa Shadowsong','Rut’theran Village, Teldrassil.','https://www.wowhead.com/forever/item=6326/recipe-slitherskin-mackerel']
+  };
+  function recipeSeller(rec) {
+    if(!window.GuideFaction.alliance)return sellers[rec.seller];
+    if(allianceSellers[rec.auctionRecipe])return allianceSellers[rec.auctionRecipe];
+    if(rec.seller==='sheendra')return ['Vivianna','Feathermoon Stronghold, Feralas (31.3, 43.5).','https://metabot.gg/en/wow-forever/npcs/vivianna-7947'];
+    return ['kelsey','gikkix','kilxx'].includes(rec.seller)?sellers[rec.seller]:undefined;
+  }
   const bayCatch = new Set(['Raw Rockscale Cod','Raw Spotted Yellowtail','Firefin Snapper','Oily Blackmouth']);
   function external(text, url) {
     const link=node('a','',text);
@@ -332,7 +291,9 @@
     const result=node('div','ref-lookup-result'); result.setAttribute('aria-live','polite');
     tools.append(searchField,fishField,skillField);
     card.append(node('p','ref-context','Choose a fish from your bags and enter your current Cooking skill.'),tools,result);area.append(card);
-    area.append(disclosure('Fish caught in Booty Bay','',body=>{
+    const bayAdvice=node('p','ref-context');
+    area.append(disclosure('What can I cook from the Booty Bay dock?','',body=>{
+      body.append(bayAdvice);
       body.append(node('p','ref-copy','These four fish were recorded in open water at 27.6, 76.8 in Stranglethorn Vale. Select a catch to look it up.'));
       const links=node('div','ref-fish-links');
       for(const name of bayCatch){
@@ -351,7 +312,7 @@
       select.replaceChildren();
       const words=norm(lookup.search).split(' ').filter(Boolean);
       const results=catches.filter(rec=>{
-        const wordsToMatch=norm([rec.fish,rec.meal,...(sellers[rec.seller] || []).slice(0,2),rec.alchemy?'Alchemy':'',bayCatch.has(rec.fish)?'Booty Bay':''].join(' '));
+        const wordsToMatch=norm([rec.fish,rec.meal,...(recipeSeller(rec) || []).slice(0,2),rec.alchemy?'Alchemy':'',rec.auctionRecipe?'Auction House AH':'',bayCatch.has(rec.fish)?'Booty Bay':''].join(' '));
         return words.every(word=>wordsToMatch.includes(word));
       });
       for(const rec of results) {
@@ -363,6 +324,11 @@
     }
     function show() {
       result.replaceChildren();
+      const rank=Number(skill.value);
+      if(Number.isInteger(rank) && rank>=1 && rank<=300) {
+        const useful=catches.filter(r=>bayCatch.has(r.fish) && r.levels && rank<300 && rank>=r.levels[0] && rank<r.levels[3]);
+        bayAdvice.textContent=useful.length?'At Cooking '+rank+', '+useful.map(r=>r.meal).join(' and ')+' can give skill-ups if learned and below your trained cap.':'At Cooking '+rank+', none of these four recorded catches gives a Cooking skill-up.';
+      } else bayAdvice.textContent='Enter your Cooking skill above to see which catches can still give skill-ups.';
       const rec=catches.find(r=>r.fish===select.value);
       if(!rec){empty(result,'No matching fish in this guide. Try a shorter name or a nearby town.');return;}
       result.append(node('h3','',rec.meal));
@@ -392,14 +358,19 @@
       }
       line('Skill-up',status);
       line('Cook','1 '+rec.fish+(rec.extra?' + 1 '+rec.extra:'')+' at '+(rec.station || 'a cooking fire')+'.');
-      const [vendor,where,vendorSource]=sellers[rec.seller];
-      const sellerInfo=node('span');sellerInfo.append(node('strong','',vendor),' · '+rec.price+' base price. '+where);
+      const seller=recipeSeller(rec);
+      const [vendor,where,vendorSource]=seller || [];
+      const sellerInfo=node('span');
+      if(seller)sellerInfo.append(node('strong','',vendor),' · '+rec.price+' base vendor price. '+where);
+      else sellerInfo.textContent='See the recipe item for Alliance vendors.';
+      if(rec.auctionRecipe) sellerInfo.append(' Check the Auction House before travelling.');
       line('Buy recipe',sellerInfo);
       if(rec.buff)line('Food effect',rec.buff);
       line('Skill thresholds','Orange '+min+' · Yellow '+yellow+' · Green '+green+' · Grey '+grey);
       const links=node('span');
       links.append(external('Cooking recipes','https://wow-forever.gg/professions/cooking/'));
       if(rec.source)links.append(' · ',external('Food details',rec.source));
+      if(rec.auctionRecipe)links.append(' · ',external('Recipe item','https://www.wowhead.com/forever/item='+rec.auctionRecipe));
       if(vendorSource)links.append(' · ',external('Vendor directions',vendorSource));
       line('Sources',links);
       result.append(details);
@@ -408,9 +379,9 @@
   }
   function fishing(host,guide,character) {
     title(host,'Fishing & Cooking');
-    const view=state.fish[character] || 'lookup';
+    const view='spots';
     const toolbar=node('div','ref-tools'),area=node('div','ref-content');
-    toolbar.append(field('View',[['lookup','Fish lookup'],['attack','Attack food route'],['caster','Caster food route'],['spots','Fishing spots by level']],view,v=>{state.fish[character]=v;refresh(v);}));
+    toolbar.append(field('View',[['spots','Fishing spots by level'],['attack','Attack levelling route'],['caster','Caster levelling route'],['lookup','Fish lookup']],view,refresh));
     host.append(toolbar,area);
     function refresh(value) {
       area.replaceChildren();
@@ -439,7 +410,7 @@
         li.append(rng,body,node('span','ref-buff',buff));list.append(li);
       }
       area.append(list);
-      area.append(disclosure('Recipe vendors and training','',body=>blocks(body,comp.blocks.filter(q=>q!==b))));
+      area.append(disclosure('Recipe vendors, AH and training','',body=>blocks(body,comp.blocks.filter(q=>q!==b))));
       const fish=section(guide,'fishing');
       if(fish) area.append(disclosure('Fishing spots by level','',body=>blocks(body,fish.blocks)));
     }
@@ -457,12 +428,12 @@
     show(active);
   }
   window.FieldReference = {
-    render(panel, tab, guide, className) {
-      const views={dungeons,professions,fishing,guide:library};
+    render(panel, tab, guide, className, changeCharacter) {
+      const views={dungeons:window.WYHDungeonUI.render,professions,fishing,guide:library};
       if(!views[tab])return;
       panel.replaceChildren(); const inner=node('section','field-reference');
       panel.append(inner);
-      views[tab](inner,guide,validClass(className));
+      views[tab](inner,guide,validClass(className),changeCharacter);
     }
   };
 })();

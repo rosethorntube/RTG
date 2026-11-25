@@ -1,0 +1,74 @@
+Rosethorn's WoW Levelling Optimiser — dungeon quests
+Catalogue checked 25 November 2026. WoW Classic Forever, both factions.
+
+The website groups quest facts by levelling run, pickup stage and faction.
+Required quests, alternative prerequisites, quest-in-log requirements and
+optional introductions are represented separately. Suggested character levels
+are Rosethorn's route recommendations. Individual quest records link to the
+Forever database by quest ID. Each dungeon also links to its source catalogue.
+
+QuestieDB, by the Questie team and contributors (GNU GPL version 3)
+https://github.com/Questie/QuestieDB/tree/4377c981ac368d1593ec92788218e0a689a6a02b
+The Forever raw quest, NPC, item and object tables, generated corrections, and
+quest relationship traces supply quest IDs, eligibility, chains, starter
+identities and pickup data. Earlier routed pickups use revision
+47a4756b775e8c73687fd3066d6c13f0bc43a55e.
+
+Forever XP, by Jweyant and contributors (GNU GPL version 3)
+https://github.com/Jweyant/forever-xp/tree/cf6ce31d15484397c3b38f57a78afe477c307ece/gamedata
+Used the Forever quest export to reconcile levels, names, chains and providers.
+Some records incorporate WoW LayerUp Forever OpenData by its contributors
+(Creative Commons Attribution 4.0 International).
+https://github.com/wowlayerup-forever/opendata
+https://creativecommons.org/licenses/by/4.0/
+
+Forever Quests, by tyler3497 and contributors (GNU GPL version 3)
+https://github.com/tyler3497/forever-quests/blob/9f4c5aac2d077854d7f4a2bdc2f8eceb8d7b23af/data/quests.json
+The QuestieDB-derived companion export supplies additional cross-checks for
+prerequisites, levels and providers. The website adaptation selects and groups
+these facts into runs and combines them with the named sources above.
+The adapted quest data in dungeon-quests.js is distributed under GNU GPL v3.
+The full text is supplied in dungeon-data-GPL-3.0.txt.
+
+Catalogue and route cross-checks
+https://foreverquestlog.com/dungeons/
+https://legacyofwarcraft.com/db/forever/quests/
+https://www.wowhead.com/forever/quests
+https://wow-forever.gg/guides/dungeons/ruins-of-lordaeron/
+https://www.wowhead.com/forever/guide/scholomance-dungeon-overview-location-rewards
+https://www.wowhead.com/forever/quest=97174
+https://warcraft.wiki.gg/wiki/Titan_Relic_(Forever)
+https://warcraft.wiki.gg/wiki/Somber_News
+https://www.wowhead.com/forever/quest=95056
+https://outof.games/realms/forever/quest/96257-a-good-trade/
+
+Guide-specific changes include separating overlapping instance footprints into
+runnable wings, distinguishing pickups from post-run follow-ups, and excluding
+obsolete entries, raid-only duplicates and area-tagged city errands. Dungeon
+and quest names belong to Blizzard Entertainment. No live client is connected
+to the website. Completion marks are saved in the player's browser. See the
+associated sharing evidence for the sources of the party-sharing flags.
+
+Party sharing
+Each quest links to the record supporting its sharing label. A group member
+must still qualify for the quest, including any prerequisite turn-ins.
+The sharing mask is 0x8. Where a source omitted the field, a separate
+Forever record with an explicit value was required.
+
+QuestieDB Forever quest rows and applied numeric corrections, Questie team,
+revision 4377c981ac368d1593ec92788218e0a689a6a02b, GNU GPL v3.
+https://github.com/Questie/QuestieDB/tree/4377c981ac368d1593ec92788218e0a689a6a02b
+WoW LayerUp Forever OpenData, contributors, CC BY 4.0. Party-sharing values
+were extracted from the flags field of published client-cache observations.
+https://github.com/wowlayerup-forever/opendata/tree/4f68475a30f679409c065dc85fcc8a39109a057b
+https://creativecommons.org/licenses/by/4.0/
+Meaning of the sharing bit
+https://github.com/cmangos/issues/wiki/Quest_template#questflags
+
+Additional yes/no checks use the individual Forever quest records linked in
+the guide, including Wowhead, Zephras, Efficient Gaming, SenseOS, 60.tools
+and ForeverChanges. These are source-recorded flags and are not a log of
+personal in-game tests. Five Ruins records have conflicting published
+values (95189, 95195, 95204, 97289 and 97292). For each, Wowhead's exact-ID
+Quick Facts and two independently published build-tagged records agree that
+it cannot be shared. Players should collect these personally.

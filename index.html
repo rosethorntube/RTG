@@ -1,8 +1,8 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#141918"><title>Rosethorn’s Horde Field Guide</title><meta name="description" content="Rosethorn’s interactive WoW Forever guide for nine Horde characters. Track milestones, find dungeon quests and profession recipes, and download While You’re Here, the in-game addon by Rosethorn."><link rel="icon" href="horde.webp"><link rel="preload" href="barrens.webp" as="image"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="reference.css"><link rel="stylesheet" href="planner.css?v=3"><link rel="stylesheet" href="wyh.css?v=036"></head>
+<html lang="en-GB"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#141918"><title>WoW Levelling Optimiser</title><meta name="description" content="Plan your WoW Forever roster, track Legacy Points, find dungeon pickups and compare professions for Horde or Alliance. Download While You're Here for advice in-game."><link rel="icon" href="wyh-icon.png"><link rel="preload" href="barrens.webp" as="image"><link rel="stylesheet" href="style.css"><link rel="stylesheet" href="reference.css?v=2"><link rel="stylesheet" href="planner.css?v=4"><link rel="stylesheet" href="wyh.css?v=037"><link rel="stylesheet" href="app-extra.css?v=3"><link rel="stylesheet" href="dungeon-ui.css?v=1"><link rel="stylesheet" href="bag-route.css?v=1"></head>
 <body><a href="#main" class="skip">Skip to guide</a>
-<header class="global"><div class="wrap brandrow"><a class="brand" href="#setup" aria-label="Rosethorn Field Guide home"><img src="horde.webp" alt=""><span>ROSETHORN<span class="brand-sub">FIELD GUIDES</span></span></a><div class="headlinks"><a id="original" target="_blank" rel="noopener" class="source">Original guide <span aria-hidden="true">↗</span></a><a href="#advisor" class="top-addon" aria-label="While You’re Here addon"><img src="wyh-icon.png" width="20" height="20" alt=""> While You’re Here</a></div></div></header>
-<section class="hero"><div class="wrap hero-inner"><span class="eyebrow"><i></i> WORLD OF WARCRAFT · FOREVER</span><h1>Horde <em>Field Guide</em></h1><p>Plan your Horde roster, track Legacy Points and pick your next dungeon.</p><div class="hero-stats"><span><b>9</b> classes</span><span><b>1–60</b> levels</span><span><b id="dcount">37</b> dungeon entries</span></div></div><span class="place">THE BARRENS <i></i> KALIMDOR</span></section>
+<header class="global"><div class="wrap brandrow"><a class="brand" href="#setup" aria-label="Rosethorn's WoW Levelling Optimiser home"><img src="wyh-icon.png" width="36" height="36" alt=""><span>ROSETHORN<span class="brand-sub">WOW FOREVER</span></span></a><div class="headlinks"><label class="faction-picker" for="faction"><span>Faction</span><select id="faction"><option>Horde</option><option>Alliance</option></select></label><a href="#advisor" class="top-addon">While You’re Here</a></div></div></header>
+<section class="hero"><div class="wrap hero-inner"><span class="eyebrow"><i></i> WORLD OF WARCRAFT · FOREVER</span><h1>WoW <em>Levelling Optimiser</em></h1><p>Build your <strong id="faction-heading">Horde roster</strong>, choose your Legacy Point priority and plan the journey to level 60.</p><div class="hero-stats"><span><b>9</b> classes</span><span><b>1–60</b> levels</span><span><b id="dcount"></b> dungeons &amp; wings</span></div></div><span class="place">THE BARRENS <i></i> KALIMDOR</span></section>
 <nav aria-label="Guide sections" class="tabs"><div class="wrap tabinner" id="nav"></div></nav>
 <main id="main" class="wrap" tabindex="-1"><div id="page">
 <article id="wyh-addon" class="wyh" aria-labelledby="wyh-name">
@@ -10,30 +10,33 @@
     <div class="wyh-intro">
       <p class="wyh-kicker">A WoW Forever addon by Rosethorn</p>
       <h1 id="wyh-name">While You’re <em>Here</em></h1>
-      <p class="wyh-deck">Pick up the dungeon quest before you leave town. Find the recipe before your boat sails. Send the ore in your bags to the alt who needs it.</p>
+      <p class="wyh-deck">Heading out of town? The rose compass shows which dungeon pickups and recipe vendors are worth a stop. Open the Guide for your next craft, fishing spot or Legacy Point.</p>
       <div class="wyh-download">
-        <a class="cta" href="While-Youre-Here.zip?v=0.3.6" download="While-Youre-Here.zip">Download addon <span aria-hidden="true">↓</span></a>
-        <span>Horde · Version 0.3.6 · Works on its own</span>
+        <a class="cta" href="While-Youre-Here.zip?v=0.3.15" download="While-Youre-Here.zip">Download addon <span aria-hidden="true">↓</span></a>
+        <span>v0.3.15 · No other addons required</span>
       </div>
+      <p class="wyh-release">Coming soon to CurseForge.</p>
     </div>
     <img class="wyh-emblem" src="wyh-icon.png" width="400" height="400" alt="">
   </header>
 
   <section class="wyh-features" aria-labelledby="wyh-features-title">
     <h2 id="wyh-features-title">What it can do</h2>
-    <p class="wyh-switch-note">Choose the tips you want under <code>/wyh</code> → <strong>Tips</strong>. Each switch is saved across your alts.</p>
+    <p class="wyh-switch-note">Click the rose compass for tips. Choose <strong>Guide</strong> for tools, or right-click the compass and open <strong>Tips</strong> to change these seven account-wide switches.</p>
     <ul class="wyh-feature-list">
-      <li><strong>Find dungeon prequests and quest givers</strong><span>Get an alert anywhere in the zone. Mark several givers on your map or follow an arrow to one.</span></li>
-      <li><strong>Spot nearby recipes and training books</strong><span>Find a useful vendor before you leave Desolace, Arathi Highlands or Booty Bay.</span></li>
-      <li><strong>Plan professions and earn Legacy Points</strong><span>See which alt is close to 150, 225 or 300 in a craft, plus the next recipe and materials to buy.</span></li>
-      <li><strong>Send spare materials to the right alt</strong><span>At the mailbox, check who can use your ore, cloth or leather and what’s already in their bank.</span></li>
-      <li><strong>Find fishing stops and recipes for your catch</strong><span>Fish while you wait for the boat. Check the local skill target and where to buy the recipe.</span></li>
-      <li><strong>Compare fishing spots and auction prices</strong><span>Compare your catches per cast and per hour. See when selling fish could fund more Cooking skill-ups.</span></li>
+      <li><strong>Find dungeon prequests and quest givers</strong><span>Spot eligible pickups anywhere in the zone. Pin several givers or follow an arrow to one. Before skipping a guide chapter, check its zone for unfinished chains.</span></li>
+      <li><strong>Spot nearby recipes and training books</strong><span>Find a useful unlearned recipe, navigate to the vendor or compare a tradeable book with its last known auction price.</span></li>
+      <li><strong>Plan professions and earn Legacy Points</strong><span>See the next craft, trainer or book for your current skill. Compare your main and alts when choosing your next Legacy Point.</span></li>
+      <li><strong>Send spare materials to the right alt</strong><span>At the mailbox, see which alt can use your cloth, ore or leather and how much was in their bank at your last visit.</span></li>
+      <li><strong>Find fishing stops and recipes for your catch</strong><span>See which fish in your bags you can cook, whether the recipe still gives skill-ups and where to learn it.</span></li>
+      <li><strong>Where should I fish?</strong><span>Set a goal in <b>Guide → Fishing</b>. Compare waters for Cooking skill, food for your build or sale value. One water can supply several useful recipes.</span></li>
+      <li><strong>Compare fishing spots and auction prices</strong><span>See catches per hour and estimated gold per hour. Each catch uses the better of vendor value and auction proceeds after fees.</span></li>
     </ul>
+    <p class="wyh-coverage" id="addon-coverage"></p>
   </section>
 
   <section class="wyh-previews" aria-labelledby="wyh-preview-title">
-    <div class="wyh-section-heading"><h2 id="wyh-preview-title">What you’ll see</h2><p>Illustrated interface previews</p></div>
+    <div class="wyh-section-heading"><h2 id="wyh-preview-title">In the field</h2><p>Illustrated examples from the Horde route</p></div>
     <div class="wyh-gallery">
       <figure>
         <a class="wyh-shot" href="wyh-undercity.jpg" target="_blank" rel="noopener" aria-label="Open the Undercity quest alert preview at full size in a new tab">
@@ -41,8 +44,8 @@
           <span aria-hidden="true">Full size ↗</span>
         </a>
         <figcaption><p class="wyh-location">Undercity · Razorfen Kraul</p>
-          <h3>Never miss another dungeon prequest</h3>
-          <p>At level 30, your icon lights up even in the Trade Quarter. Faranell has <em>Going, Going, Guano!</em> across town in the Apothecarium.</p>
+          <h3>Pick up the quest before leaving town</h3>
+          <p>In the Trade Quarter? An eligible pickup can still send you across Undercity to Faranell for <em>Going, Going, Guano!</em></p>
         </figcaption>
       </figure>
       <figure>
@@ -52,7 +55,7 @@
         </a>
         <figcaption><p class="wyh-location">Arathi Highlands · Profession vendors</p>
           <h3>Buy the pattern on this trip</h3>
-          <p>Reach Thoradin’s Wall with Tailoring 145 and Azure Silk Cloak still to learn. Your icon lights up for Jun’ha’s limited-stock pattern in Hammerfall.</p>
+          <p>When Azure Silk Cloak is useful to your tailor, the alert points to Jun’ha’s limited-stock pattern in Hammerfall.</p>
         </figcaption>
       </figure>
       <figure>
@@ -69,18 +72,16 @@
   </section>
 
   <section class="wyh-help" aria-labelledby="wyh-help-title">
-    <h2 id="wyh-help-title">In game</h2>
+    <h2 id="wyh-help-title">Getting started</h2>
     <div>
-      <details><summary>Install or update</summary>
-        <ol><li>Download and unzip <code>While-Youre-Here.zip</code>.</li><li>Copy the <code>RosethornAdvisor</code> folder into your WoW Forever <code>Interface/AddOns</code> folder. For an update, replace the existing folder.</li><li>Enable <strong>While You’re Here</strong> at character selection. Left-click its icon for all suggestions or type <code>/wyh</code> for settings.</li></ol>
-        <p>Updates keep your settings, alt records and map pins. Type <code>/wyh now</code> for suggestions or <code>/wyh help</code> for all commands.</p>
-      </details>
-      <details><summary>Choose what lights up</summary><p>All current suggestions share one scrollable list. Dismiss a pickup for this visit, snooze alerts, or mute a tip across your characters. Choose which categories can open the window and whether to keep quiet in combat.</p><p>Move or resize the display. A colour wheel and transparency controls let you change the text, background, window border and launcher glow. Your preferences carry across alts on this installation.</p></details>
-      <details><summary>What’s tracked across my roster?</summary><p>Log into each alt and open its bank to update its stock. Browse all 12 professions, mark the ones you intend to learn, and see training caps. The six primary crafts include recipe routes and shopping estimates. Open your profession window to record learned recipes where supported. Check the in-game Legacy panel for credit earned elsewhere.</p><p>The catalogue covers 502 Horde and shared dungeon quests and prerequisites, including 402 with verified map locations. Suggestions show the required level and colour-coded quest level. Accepting a pickup clears the alert, and completing a prerequisite can reveal the next step. Entering a Spelunker dungeon can prompt a final-boss credit check.</p></details>
-      <details><summary>Fishing prices, routes and optional addons</summary><p>While You’re Here works on its own. Choose a destination manually or let a compatible RestedXP arrow trigger travel tips. Use prices from an auction search, a manual quote or optional Auctionator data.</p><p>After five minutes, see the estimated auction value of your priced catches per hour. To rank spots, fish each for at least 15 minutes, land 10 items and collect recent quotes from the same market. Per-cast rankings also need 20 observed casts. Cooking comparisons cover ingredients and the auction cut where known.</p></details>
+      <details><summary>How do I install or update it?</summary><ol><li>Exit WoW Forever and extract the ZIP.</li><li>Place the <code>WhileYoureHere</code> folder inside <code>Interface/AddOns</code>. Open it to check that <code>WhileYoureHere.toc</code> is directly inside.</li><li>Enable <strong>While You’re Here</strong> at character selection. Click the rose compass or type <code>/wyh</code>.</li></ol><p><strong>Upgrading from RosethornAdvisor?</strong> Before launching WoW, open <code>WTF/Account/&lt;account&gt;/SavedVariables</code>. Copy <code>RosethornAdvisor.lua</code> and name the copy <code>WhileYoureHere.lua</code> in that same folder. Keep the original as a backup. If the new filename already exists, back it up first. Move the old <code>RosethornAdvisor</code> addon folder out of <code>Interface/AddOns</code>.</p></details>
+      <details><summary>Where do I find fishing advice?</summary><p>Click <strong>rose compass → Guide → Fishing</strong>. Choose your goal before you cast. Log the water you actually fish to build comparisons from your own catches. Auctionator can supply prices if installed.</p></details>
+      <details><summary>Can I skip a RestedXP chapter?</summary><p>Click the rose compass, then <strong>Guide → Now → Before you skip ahead</strong>. Select the zone you’re leaving to review covered pickups and prerequisites. This also works without RestedXP.</p></details>
+      <details><summary>How does it know about my alts?</summary><p>Visit each character and open their professions and bank to refresh their records. On your main, choose <strong>Guide → Alts → Set as main to 60</strong>. The website planner stores its own checklists in this browser.</p></details>
+      <details><summary>Can I change or silence the alerts?</summary><p>Right-click the compass to choose tip categories, colours and transparency, or to keep alerts quiet in combat. Drag and resize the window to suit your UI. Settings carry across characters on this installation.</p></details>
     </div>
   </section>
 </article>
 </div></main>
-<footer class="wrap foot"><span>Rosethorn’s Horde Field Guide</span><a id="foot-source" target="_blank" rel="noopener">Read the original Google Doc ↗</a></footer>
-<script src="planner.js?v=5"></script><script src="planner-ui.js?v=5"></script><script src="guide-data.js?v=3"></script><script src="reference.js?v=4"></script><script src="app.js?v=8"></script></body></html>
+<footer class="wrap foot"><span>Rosethorn · WoW Levelling Optimiser</span><a id="foot-source" target="_blank" rel="noopener">Original Horde guide ↗</a></footer>
+<script src="faction.js?v=1"></script><script src="planner.js?v=7"></script><script src="planner-ui.js?v=7"></script><script src="guide-data.js?v=3"></script><script src="alliance-guide.js?v=1"></script><script src="gathering.js?v=1"></script><script src="dungeon-quests.js?v=1"></script><script src="dungeon-quest-meta.js?v=1"></script><script src="dungeon-ui.js?v=1"></script><script src="bag-route.js?v=1"></script><script src="reference.js?v=6"></script><script src="app.js?v=10"></script></body></html>

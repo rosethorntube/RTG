@@ -49,7 +49,7 @@
   }
   function setup(host,redraw) {
     const head=node('div','plan-head'),intro=node('div');
-    intro.append(node('h2','title','What are you planning to level?'),node('p','plan-lead','Choose your classes in levelling order. You can add up to two professions per class.'));
+    intro.append(node('h2','title','Plan your '+window.GuideFaction.name+' roster'),node('p','plan-lead','Choose classes in levelling order and up to two professions each. Each faction has its own saved plan.'));
     const copy=button('Copy Rosethorn’s setup','plan-alt',()=>{M.copyPreset(plan);editing=plan.order[0];redraw();});
     copy.title='Select all nine classes with Rosethorn’s profession pairs';
     const related=M.savedGuideEntries();
@@ -72,9 +72,9 @@
       redraw(false,'clear-setup');
     });
     clear.id='clear-setup';
-    clear.title=previousSetup?'Restore your roster and progress':'Reset your roster, professions, all milestones, dungeon checklists and LP.';
+    clear.title=previousSetup?'Restore this roster and progress':'Reset the '+window.GuideFaction.name+' roster, professions, milestones, dungeon checklists and LP.';
     const hasProgress=plan.order.length || Object.values(plan.jobs).some(jobs=>jobs.length) ||
-      Object.keys(plan.flags).length || plan.otherLP || plan.started || plan.goal!==16 || related.length;
+      Object.keys(plan.flags).length || plan.otherLP || plan.started || M.priority(plan)!==null || related.length;
     clear.disabled=!previousSetup && !hasProgress;
     actions.append(copy,document.createTextNode(' '),clear,feedback);
     head.append(intro,actions);host.append(head);
@@ -124,6 +124,69 @@
     const next=button('Open my milestones →','cta',()=>{plan.started=true;M.save(plan);go('milestones');});
     next.disabled=!M.available(plan); sidebar.append(next);
     sidebar.append(node('p','plan-note','Your choices and ticks are saved in this browser.'));
+    suggestedOrder(host,redraw);
+  }
+  function priorityControl(view,redraw) {
+    const label=node('label','order-priority');
+    const select=node('select','pselect');
+    select.id=view+'-lp-priority';
+    const active=M.priority(plan);
+    const options=[null,5,10,16];
+    if(active!==null && !options.includes(active))options.push(active);
+    for(const goal of options) {
+      const option=node('option','',goal===null?'No LP priority':goal+' LP');
+      option.value=goal===null?'':String(goal);select.append(option);
+    }
+    select.value=active===null?'':String(active);
+    select.onchange=()=>{
+      if(M.setPriority(plan,select.value===''?null:Number(select.value)))redraw(true,select.id);
+    };
+    label.append(node('span','','LP priority'),select);
+    return label;
+  }
+  function suggestedOrder(host,redraw) {
+    const region=node('section','plan-box milestone-order');region.id='suggested-milestone-order';
+    region.setAttribute('aria-labelledby','order-heading');
+    const heading=node('h3','','Suggested Milestones Order');heading.id='order-heading';
+    const head=node('div','order-heading');head.append(heading,priorityControl('setup',redraw));
+    region.append(head);host.append(region);
+    if(!plan.order.length) {
+      region.append(node('p','plan-note','Select a class above to see its route to level 60.'));return;
+    }
+    const route=M.milestoneOrder(plan);
+    if(!route.phases.length) {
+      region.append(node('p','plan-note','All selected classes are at level 60 and every selected profession is at 300.'));
+      if(route.target && !route.reachedGoal)
+        region.append(node('p','order-limit','Record another '+(route.target-route.startLP)+' LP from other challenges or expand your roster to reach '+route.target+'.'));
+      return;
+    }
+    const intro=route.target && route.startLP<route.target
+      ? 'Work towards '+route.target+' LP first, then finish the roster in the order above.'
+      : 'Follow your class order through level 60 and every selected profession to 300.';
+    region.append(node('p','plan-note',intro+' Gathering checkpoints fit around levelling. Tick completed steps on Milestones to update this list.'));
+    if(route.target && !route.reachedGoal)
+      region.append(node('p','order-limit','Your remaining route projects '+route.projectedLP+' LP in total. Complete other challenges or add classes and crafts to reach '+route.target+'.'));
+    let number=1;
+    for(const [index,phase] of route.phases.entries()) {
+      const details=node('details','order-phase');
+      details.open=index===0;
+      const summary=node('summary');
+      summary.append(node('b','',phase.title),node('span','order-count',phase.steps.length+(phase.steps.length===1?' step':' steps')));
+      const list=node('ol','order-steps'),tail=node('ol','order-steps');
+      list.start=number;tail.start=number+6;
+      for(const [i,item] of phase.steps.entries()) {
+        const li=node('li','order-step');li.dataset.key=item.key;
+        li.append(node('span','',item.title));
+        if(item.lp>0)li.append(rewardBadge('+'+item.lp+' LP · '+item.total+' total'));
+        (i<6?list:tail).append(li);number++;
+      }
+      details.append(summary,list);
+      if(phase.steps.length>6) {
+        const more=node('details','order-more'),n=phase.steps.length-6;
+        more.append(node('summary','','Show '+n+' more '+(n===1?'step':'steps')),tail);details.append(more);
+      }
+      region.append(details);
+    }
   }
   function check(key,label,redraw) {
     const c=node('input','plan-check');c.type='checkbox';c.id=key;c.checked=!!plan.flags[key];c.setAttribute('aria-label',label);
@@ -157,9 +220,10 @@
     const box=node('section','account-lp');box.setAttribute('aria-label','Legacy Points for the selected roster and shared challenges');
     const main=node('div','account-lp-main'),num=node('strong','earned-number',String(summary.earned));
     const caption=node('div','earned-caption');
-    caption.append(node('b','','Roster LP'),node('small','','Selected classes and shared challenges'));
+    caption.append(node('b','',window.GuideFaction.name+' roster LP'),node('small','','Selected classes and this roster’s recorded challenges'));
     main.append(num,caption);
-    const target=plan.goal, goal=node('div','lp-goal');
+    const target=M.priority(plan), goal=node('div','lp-goal');
+    goal.append(priorityControl('milestones',redraw));
     if(target>0){
       const bar=node('progress');bar.max=target;bar.value=Math.min(summary.earned,target);
       bar.setAttribute('aria-label','Progress towards '+target+' Legacy Points');
@@ -183,6 +247,7 @@
     const help=node('p','plan-note','Enter only points earned outside these class, crafting and Spelunker milestones, such as PvP or exploration.');help.id='other-lp-help';
     label.append(input);extra.append(label,help);
     box.append(main,goal,detail,extra);host.append(box);
+    host.append(node('p','plan-note','This is a faction planning total. Each account-wide reward counts once in game, even if you tick it on both boards.'));
   }
   function showStep(key) {
     const c=document.getElementById(key),box=c?.closest('details');
@@ -220,7 +285,7 @@
         cell.title=label;rewardCell(cell,M.levelKey(c,n),label,redraw);
       }
     }
-    lv.append(levelTable.table,node('p','plan-note','5 · Park in an inn. 10 / 20 / 35 · Journeyman, Expert and Artisan training. 25 / 45 / 60 · +1 LP each.'));
+    lv.append(levelTable.table,node('p','plan-note','5 · Reach level 5. Park in an inn for rested XP. 10 / 20 / 35 · Journeyman, Expert and Artisan training. 25 / 45 / 60 · +1 LP each.'));
     pro.append(node('h3','','Professions'));
     const skillTable=tableFrame([['Class / profession'],...M.ranks.map(n=>[String(n)])]);
     for(const c of plan.order){

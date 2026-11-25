@@ -1,6 +1,21 @@
 .app-icon { display:inline-flex;align-items:center;justify-content:center;flex:none; }
 .app-mobile-nav { display:none; }
 .app-pane { min-width:0; }
+.brandrow .brand img{width:34px;height:34px;border-radius:4px;object-fit:contain}
+.faction-picker{display:inline-flex;align-items:center;gap:8px;color:#c6c8b9;font-size:.83rem}
+.faction-picker select{font:inherit;font-weight:650;color:#f6e9d1;border:1px solid #777362;border-radius:4px;background:#242b27;padding:.4rem .56rem;min-height:36px;cursor:pointer}
+.faction-picker select:focus-visible{outline:2px solid #edd09a;outline-offset:2px}
+.hero h1{max-width:100%}
+.hero p strong{font-weight:600;color:#ede7d5}
+body[data-faction="Alliance"] .faction-picker select{background:#20333f;color:#dbeefa;border-color:#738b98}
+.wyh .wyh-release,.wyh .wyh-coverage{font-size:.85rem;color:#c1c7b5;margin-top:.75rem}
+@media(max-width:670px){
+  .headlinks{gap:8px}
+  .faction-picker>span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+  .brandrow .brand img{width:28px;height:28px}
+  .hero h1{font-size:clamp(2.8rem,9.1vw,4.1rem)}
+}
+@media(max-width:380px){.brand-sub{display:none}.brand>span{font-size:.8rem}.brandrow .brand img{width:24px;height:24px}.faction-picker select{padding-inline:.25rem}}
 .source-date { order:1; }
 .foot a { order:2; }
 @media(max-width:670px) {
@@ -9,4 +24,12 @@
   .app-mobile-nav { width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;color:#c4c4b6;font-size:14px;padding:8px 0; }
   .app-mobile-nav .pselect { flex:0 1 13rem; }
   .foot .source-date { order:2;flex:1 0 100%; }
+}
+
+@media(max-width:670px){
+  .dash .profession-roster{display:block;position:static;max-width:100%;min-width:0}
+  .profession-roster .roster-head{padding:9px 12px}
+  .profession-roster .rlist{display:flex;gap:4px;overflow-x:auto;padding:5px 8px;scroll-padding-inline:8px}
+  .profession-roster .rbutton{flex:0 0 auto;width:auto;min-height:40px;padding:6px 10px;white-space:nowrap}
+  .profession-roster .toon,.profession-roster .all-icon{display:none}
 }

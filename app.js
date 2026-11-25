@@ -3,10 +3,9 @@
   const guide=window.ROSE_GUIDE;
   const page=document.getElementById('page');
   const addonPage=document.getElementById('wyh-addon');
+  const addonCoverage=addonPage.querySelector('#addon-coverage');
   const guideTitle=document.title;
   const nav=document.getElementById('nav');
-  const section=id=>guide.sections.find(s=>s.id===id);
-  const firstTable=id=>section(id).blocks.find(b=>b.type==='table');
   const tabs=[
     ['setup','Setup'],['milestones','Milestones'],['dungeons','Dungeons'],['professions','Professions'],
     ['fishing','Fishing & Cooking'],['guide','Guide library'],['advisor','Addon']
@@ -24,9 +23,9 @@
   };
   const storage='rosethorn.fieldguide.v1.';
   function read(key,fallback) {
-    try {return JSON.parse(localStorage.getItem(storage+key)??'null')??fallback;}catch{return fallback;}
+    try {return JSON.parse(localStorage.getItem(window.GuideFaction.storageKey(storage+key))??'null')??fallback;}catch{return fallback;}
   }
-  function save(key,value) {try{localStorage.setItem(storage+key,JSON.stringify(value));}catch{}}
+  function save(key,value) {try{localStorage.setItem(window.GuideFaction.storageKey(storage+key),JSON.stringify(value));}catch{}}
   const selected=read('character','');
   let character=window.PlannerUI.plan.order.includes(selected)?selected:'';
   const el=(tag,css,text)=>{
@@ -58,9 +57,14 @@
     return tabs.some(([id])=>id===raw)?raw:window.PlannerUI.defaultTab();
   }
   function switchTo(id) {if(currentTab()!==id)location.hash=id;}
-  const extra=el('link');extra.setAttribute('rel','stylesheet');extra.setAttribute('href','app-extra.css');document.head.append(extra);
-  for(const id of ['original','foot-source'])document.getElementById(id).href=guide.sourceUrl;
-  document.getElementById('dcount').textContent=String(firstTable('dungeons').rows.length-1);
+  const factionSelect=document.getElementById('faction');
+  factionSelect.addEventListener('change',()=>window.GuideFaction.select(factionSelect.value));
+  document.querySelector('a.skip').addEventListener('click',event=>{
+    event.preventDefault();
+    const main=document.getElementById('main');
+    main.focus({preventScroll:true});main.scrollIntoView({block:'start'});
+  });
+  document.getElementById('foot-source').href=guide.sourceUrl;
   const navLinks=new Map();
   for(const [id,label] of tabs){
     const link=anchor('#'+id,'','tab');link.append(icon(id),el('span','',label));
@@ -74,7 +78,7 @@
   function changeCharacter(name){
     character=name;save('character',name);render();
   }
-  function rosterPanel() {
+  function rosterPanel(professions=false) {
     const aside=el('aside','roster');aside.setAttribute('aria-label','Character roster');
     const heading=el('div','roster-head');heading.append(icon('roster'),el('h2','','Your roster'));
     const list=el('div','rlist');
@@ -82,10 +86,10 @@
       const button=el('button','rbutton'+(character===name?' selected':''));button.type='button';
       button.setAttribute('aria-pressed',String(character===name));
       if(name)button.append(portrait(name));else{const badge=el('span','all-icon');badge.append(icon('roster'));button.append(badge);}
-      button.append(el('span','',name||'All characters'),el('span','toon'+(name?'':' total'),detail));
+      button.append(el('span','',name||(professions?'All Professions':'All characters')),el('span','toon'+(name?'':' total'),detail));
       button.addEventListener('click',()=>changeCharacter(name));list.append(button);
     }
-    const names=window.PlannerUI.plan.order;row('',String(names.length));for(const name of names)row(name,'');
+    const names=window.PlannerUI.plan.order;row('',professions?'':String(names.length));for(const name of names)row(name,'');
     aside.append(heading,list);return aside;
   }
   function rosterSelect() {
@@ -97,12 +101,23 @@
   }
   function render() {
     const id=currentTab();navSelect.value=id;
+    const faction=window.GuideFaction;
+    factionSelect.value=faction.name;
+    document.body.dataset.faction=faction.name;
+    document.getElementById('faction-heading').textContent=faction.name+' roster';
+    const count=window.WYHDungeonQuests?.dungeons.filter(d=>Array.isArray(d[faction.name])).length;
+    const counter=document.getElementById('dcount');
+    counter.parentElement.hidden=count==null;
+    if(count!=null)counter.textContent=String(count);
+    addonCoverage.textContent=faction.alliance
+      ? 'Alliance & shared pickups are included where verified. Profession and fishing tools work on both factions.'
+      : 'Horde and shared dungeon pickups, profession routes and fishing advice.';
     for(const [key,link] of navLinks){
       link.classList.toggle('active',id===key);
       if(id===key)link.setAttribute('aria-current','page');else link.removeAttribute('aria-current');
     }
     document.body.classList.toggle('wyh-active',id==='advisor');
-    document.title=id==='advisor'?"While You’re Here by Rosethorn | WoW Forever addon":guideTitle;
+    document.title=(id==='advisor'?"While You're Here":tabs.find(([key])=>id===key)[1])+' · '+faction.name+' | '+guideTitle;
     page.replaceChildren();
     if(id==='advisor'){
       page.className='';page.append(addonPage);return;
@@ -112,13 +127,24 @@
     page.className='';
     const layout=el('div','dash');
     const pane=el('div','app-pane');
-    layout.append(rosterPanel());pane.append(rosterSelect());
+    if(id==='dungeons')layout.append(window.SleepingBagRoute.panel(character));
+    else if(id==='professions'){
+      const professionsRoster=rosterPanel(true);
+      professionsRoster.classList.add('profession-roster');
+      layout.append(professionsRoster);
+    } else {layout.append(rosterPanel());pane.append(rosterSelect());}
     layout.append(pane);page.append(layout);
     const content=el('div');pane.append(content);
-    window.FieldReference.render(content,id,guide,character);
+    window.FieldReference.render(content,id,faction.alliance?window.ALLIANCE_GUIDE:guide,character,changeCharacter);
   }
   window.addEventListener('hashchange',render);
+  window.addEventListener('guidefactionchange',()=>{
+    window.PlannerUI.reload();
+    character=read('character','');
+    render();
+  });
   window.addEventListener('storage',event=>{
+    if(event.key===null || event.key===window.GuideFaction.preference)window.GuideFaction.sync();
     if(event.key===null || event.key===window.WYHPlan.key || window.WYHPlan.relatedKeys.includes(event.key)){window.PlannerUI.reload();render();}
   });
   const sourceDate=new Date(guide.retrieved+'T12:00:00Z');

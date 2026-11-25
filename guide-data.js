@@ -859,7 +859,7 @@ window.ROSE_GUIDE = {
       "blocks": [
         {
           "type": "p",
-          "text": "Check what you need from each area as you pass through it. Numbers in brackets are skill needed to learn the recipe."
+          "text": "Numbers in brackets give the skill needed to learn each recipe. For tradeable books and recipes, compare the Auction House (AH) before travelling. Prices shown are base vendor prices. Buy bind-on-pickup (BoP) recipes on the character who will learn them."
         },
         {
           "type": "table",
@@ -870,59 +870,59 @@ window.ROSE_GUIDE = {
             ],
             [
               "Booty Bay",
-              "Old Man Heming: Expert Fishing – The Bass and You (125)\nKelsey Yance: Mithril Head Trout (175) and Cooked Glossy Mightfish (225)\nAlso sells both Sagefish recipes if you missed Orgrimmar.\nMazk Snipeshot: Accurate Scope (Engineering 180, BoP)"
+              "Old Man Heming or AH — Expert Fishing – The Bass and You (125, 1g from Heming).\nKelsey Yance or AH — Mithril Head Trout (175), Cooked Glossy Mightfish (225) and both Sagefish recipes.\nMazk Snipeshot — Accurate Scope (Engineering 180, BoP)."
             ],
             [
               "Orgrimmar",
-              "Shankys: Rainbow Fin Albacore (50)\nXen’to: Smoked Sagefish (80) and Sagefish Delight (175)\nSovik: Thorium Widget (Engineering 260)\nKor’geld — Free Action Potion (Alchemy 150)"
+              "Vendor or AH for all four stops.\nShankys — Rainbow Fin Albacore (50).\nXen’to — Smoked Sagefish (80) and Sagefish Delight (175).\nSovik — Thorium Widget (Engineering 260).\nKor’geld — Free Action Potion (Alchemy 150)."
             ],
             [
               "Mulgore / Thunder Bluff",
-              "Harn Longcast, Bloodhoof Village: Brilliant Smallfish (1) and Longjaw Mud Snapper (50). You can buy both and fish beside him.\nNaal Mistrunner, Thunder Bluff: Bristle Whisker Catfish (100)"
+              "Vendor or AH for all three recipes.\nHarn Longcast, Bloodhoof Village — Brilliant Smallfish (1) and Longjaw Mud Snapper (50). Fish beside him.\nNaal Mistrunner, Thunder Bluff — Bristle Whisker Catfish (100)."
             ],
             [
               "Tirisfal Glades",
-              "Abigail Shiel, Brill: Crispy Bat Wing (1) - caster food.\nWerg Thickblade, the Bulwark: Wicked Leather Gauntlets (Leatherworking 235)"
+              "Abigail Shiel in Brill or AH — Crispy Bat Wing (1), caster food.\nWerg Thickblade at the Bulwark — Wicked Leather Gauntlets (Leatherworking 235, BoP)."
             ],
             [
               "The Barrens",
-              "Zargh, Crossroads: Hot Lion Chops (125) - attack food.\nJim’bek, just West of Crossroads: Mageweave Reagent Bag (Tailoring 190) and Runecloth Reagent Bag (215) - 60 Merchant’s Favor each."
+              "Buy these BoP recipes on your cook or tailor.\nZargh, Crossroads — Hot Lion Chops (125), attack food.\nJim’bek — Mageweave Reagent Bag (Tailoring 190) and Runecloth Reagent Bag (215), 60 Merchant’s Favor each at Friendly."
             ],
             [
               "Undercity",
-              "Algernon: Superior Mana Potion (Alchemy 260)\nDaniel Bartlett: Enchant Shield – Greater Stamina (Enchanting 265)"
+              "Algernon or AH — Superior Mana Potion (Alchemy 260).\nDaniel Bartlett — Enchant Shield – Greater Stamina (Enchanting 265, BoP)."
             ],
             [
               "Stonetalon, Sun Rock Retreat",
-              "Kulwia: Enchant Cloak – Minor Agility (110), Enchant Bracer – Lesser Strength (140)"
+              "Kulwia — Enchant Cloak – Minor Agility (110, BoP).\nKulwia or AH — Enchant Bracer – Lesser Strength (140)."
             ],
             [
               "Desolace, Shadowprey Village",
-              "Wulan: Expert Cookbook (125)\nInnkeeper Sikewa: Buy 20 Alterac Swiss for Gadgetzan cooking quest later."
+              "Wulan or AH — Expert Cookbook (125, 1g from Wulan).\nInnkeeper Sikewa — 20 Alterac Swiss for the Gadgetzan Cooking quest."
             ],
             [
               "Dustwallow Marsh",
-              "Balai Lok’Wein, Brackenwall Village: Expert First Aid – Under Wraps (125), Manual: Heavy Silk Bandage (180) and Manual: Mageweave Bandage (210).\nCan buy a set for each of your characters if you want.\nNat Pagle, Tidefury Cove: Artisan Fishing quest at level 35 / Fishing 225."
+              "Balai Lok’Wein, Brackenwall Village, or AH — Expert First Aid – Under Wraps (125, 1g), Heavy Silk Bandage (180, 22s) and Mageweave Bandage (210, 50s). All three books can be mailed to alts.\nNat Pagle, Tidefury Cove — Artisan Fishing quest at level 35 / Fishing 225."
             ],
             [
               "Tanaris",
-              "Gikkix, Steamwheedle Port: Spotted Yellowtail (225) and Nightfin Soup (250) for spell cooks. Poached Sunscale Salmon (250) for attack cooks (needs an Iron Oven). Iron Oven drops from Quartermaster Zigris in Lower Blackrock Spire.\nDirge Quikcleave, Gadgetzan: Tender Wolf Steak (225).\nDo Clamlette Surprise at lvl 35 / 225 cooking. Bring 12 Giant Eggs, 10 Zesty Clam Meat, 20 Alterac Swiss.\nAlchemist Pestlezugg: Philosopher’s Stone (Alchemy 225) and Transmute: Arcanite (275)."
+              "Vendor or AH for all six recipes.\nGikkix, Steamwheedle Port — Spotted Yellowtail (225) and Nightfin Soup (250) for spell damage. Poached Sunscale Salmon (250) gives attack power and needs an Iron Oven from Quartermaster Zigris in Lower Blackrock Spire.\nDirge Quikcleave, Gadgetzan — Tender Wolf Steak (225). For his Artisan Cooking quest at level 35 / Cooking 225, bring 12 Giant Eggs, 10 Zesty Clam Meat and 20 Alterac Swiss.\nAlchemist Pestlezugg — Philosopher’s Stone (Alchemy 225) and Transmute: Arcanite (275)."
             ],
             [
               "Feralas, Camp Mojache",
-              "Sheendra Tallgrass: Baked Salmon (275, spell) and Mightfish Steak (275, attack). Both need an Iron Oven. Also sells Lobster Stew (275), which gives the same +28 spell damage as Baked Salmon if you’re catching Darkclaw Lobster."
+              "Sheendra Tallgrass or AH — Baked Salmon (275, spell), Mightfish Steak (275, attack) and Lobster Stew (275, spell). The salmon and steak need an Iron Oven. Choose Lobster Stew if you catch Darkclaw Lobster."
             ],
             [
               "Winterspring / Riverglades",
-              "Qia, Everlook: Runecloth Gloves (Tailoring 230).\nXizzer Fizzbolt, Everlook, or Kor’gar, Powderfuse Port — Thorium Tube (Engineering 275)."
+              "Both recipes are BoP.\nQia, Everlook — Runecloth Gloves (Tailoring 230).\nXizzer Fizzbolt, Everlook, or Kor’gar, Powderfuse Port — Thorium Tube (Engineering 275)."
             ],
             [
               "Moonglade / Silithus / BRD",
-              "Lorelae Wintersong, Nighthaven: Enchant Cloak – Superior Defense (285) and Runed Arcanite Rod (290).\nLokhtos Darkbargainer, Grim Guzzler, BRD: Lesser Mana Oil (250), alternatively from Kania in Cenarion Hold."
+              "Lorelae Wintersong, Nighthaven — Runed Arcanite Rod (290, BoP). Her Enchant Cloak – Superior Defense (285) can also be bought on the AH.\nLesser Mana Oil (250) — AH, Lokhtos Darkbargainer in the Grim Guzzler, or Kania in Cenarion Hold."
             ],
             [
               "Eastern / Western Plaguelands",
-              "Jase Farlane, Light’s Hope Chapel: Runic Leather Headband (LW 265).\nMagnus Frostwake, Caer Darrow: Ebon Shiv (Blacksmithing 230) and Ornate Thorium Handaxe (250). You need the Spectral Essence trinket from the Scholomance chain equipped to see him."
+              "All three recipes are BoP.\nJase Farlane, Light’s Hope Chapel — Runic Leather Headband (Leatherworking 265).\nMagnus Frostwake, Caer Darrow — Ebon Shiv (Blacksmithing 230) and Ornate Thorium Handaxe (250). Equip Spectral Essence from the Scholomance chain to see him."
             ],
             [
               "Mount Hyjal",
@@ -984,7 +984,7 @@ window.ROSE_GUIDE = {
             "rows": [
               ["Skill", "Farm / bank — additional materials", "Craft → target skill"],
               ["1–150", "About 175 Linen Cloth and 150 Wool Cloth.", "Linen Bandage to 40 → Heavy Linen Bandage to 80 → Wool Bandage to 115 → Heavy Wool Bandage to 150."],
-              ["150–225", "About 135 Silk Cloth and 20 Mageweave Cloth. In Brackenwall Village, Dustwallow Marsh (36.4, 30.4), buy Expert First Aid – Under Wraps and the Heavy Silk Bandage and Mageweave Bandage manuals from Balai Lok’Wein.", "Silk Bandage to 180 → Heavy Silk Bandage to 210 → Mageweave Bandage to 225."],
+              ["150–225", "About 135 Silk Cloth and 20 Mageweave Cloth. Get the three books from the AH or Balai Lok’Wein, Brackenwall Village (36.4, 30.4). Her base prices are 1g for Expert First Aid – Under Wraps, 22s for Heavy Silk Bandage and 50s for Mageweave Bandage.", "Silk Bandage to 180 → Heavy Silk Bandage to 210 → Mageweave Bandage to 225."],
               ["225–300", "About 90 more Mageweave Cloth and 80 Runecloth. Bring both to Doctor Gregory Victor in Hammerfall, Arathi Highlands (73.4, 36.8). At character level 35 and First Aid 225, complete Triage. He teaches the next bandages at 240, 260 and 290.", "Mageweave Bandage to 240 → Heavy Mageweave Bandage to 260 → Runecloth Bandage to 290 → Heavy Runecloth Bandage to 300."]
             ]
         },
@@ -1029,7 +1029,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "p",
-          "text": "Keep grinding stones. *Make 34 Coarse Grinding Stones early; fill any gap with Silver Skeleton Keys to 80 / Rough Bronze Leggings to 90. Buy hammer, flux and dye. Ebon Shiv / Ornate Handaxe plans: Magnus Frostwake, Caer Darrow, normally after the level 55 Spectral Essence chain. Bold Dirk: BoP plan from Pexmit, Mount Hyjal."
+          "text": "Keep grinding stones. *Make 34 Coarse Grinding Stones early; fill any gap with Silver Skeleton Keys to 80 / Rough Bronze Leggings to 90. Buy hammer, flux and dye. The Ebon Shiv and Ornate Thorium Handaxe plans bind on pickup. Buy them from Magnus Frostwake, Caer Darrow, normally after the level 55 Spectral Essence chain. Bold Dirk: BoP plan from Pexmit, Mount Hyjal."
         }
       ],
       "sourceHeading": "Blacksmithing"
@@ -1065,7 +1065,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "p",
-          "text": "Keep components: about 60 Rough Powder, 30 Copper Bolts, 45 Coarse Powder, 15 Frameworks and 30 Heavy Powder; retain gizmos, solid powder, triggers and casings. Buy 30 Weak Flux. Artisan: Buzzek, Gadgetzan (level 35 / skill 200). Widget plan: Sovik, Orgrimmar; Tube plan: Xizzer, Everlook, bought personally."
+          "text": "Keep components: about 60 Rough Powder, 30 Copper Bolts, 45 Coarse Powder, 15 Frameworks and 30 Heavy Powder; retain gizmos, solid powder, triggers and casings. Buy 30 Weak Flux. Artisan: Buzzek, Gadgetzan (level 35 / skill 200). Buy the Thorium Widget schematic from Sovik in Orgrimmar or on the AH. The Thorium Tube schematic from Xizzer in Everlook binds on pickup."
         }
       ],
       "sourceHeading": "Engineering"
@@ -1101,7 +1101,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "p",
-          "text": "Keep 24 Cured Light Hides, 10 Cured Medium Hides, 10 Fine Leather Belts and 30 Cured Heavy Hides. Buy salt, thread and dyes. Expert: Una, Thunder Bluff; Artisan: Hahrana Ironhide, Camp Mojache. Gauntlets pattern: Werg Thickblade, Tirisfal; Headband: Jase Farlane, Light’s Hope. Obtain both before buying late materials."
+          "text": "Keep 24 Cured Light Hides, 10 Cured Medium Hides, 10 Fine Leather Belts and 30 Cured Heavy Hides. Buy salt, thread and dyes. Expert: Una, Thunder Bluff; Artisan: Hahrana Ironhide, Camp Mojache. Both late patterns bind on pickup. Buy Wicked Leather Gauntlets from Werg Thickblade in Tirisfal and Runic Leather Headband from Jase Farlane at Light’s Hope before stockpiling materials."
         }
       ],
       "sourceHeading": "Leatherworking"
@@ -1137,7 +1137,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "p",
-          "text": "Buy thread and Red Dye. Buy the elixirs. Expert: Josef Gregorian, Undercity; Artisan: Daryl Stack, Tarren Mill. Patterns: Gloves—Qia, Everlook; Cuffs—Pexmit, Mount Hyjal, BoP; Shoulders—world drop/AH. Secure patterns before stockpiling. Late skill-ups are variable; these are working estimates, not a cheapest-route guarantee."
+          "text": "Buy thread and Red Dye. Buy the elixirs. Expert: Josef Gregorian, Undercity; Artisan: Daryl Stack, Tarren Mill. The Runecloth Gloves and Cuffs patterns bind on pickup. Qia in Everlook sells Gloves and Pexmit in Mount Hyjal sells Cuffs. Runecloth Shoulders is a world drop and can be bought on the AH. Secure patterns before stockpiling. Late skill-ups are variable; these are working estimates, not a cheapest-route guarantee."
         }
       ],
       "sourceHeading": "Tailoring"
@@ -1173,7 +1173,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "p",
-          "text": "Reuse the same suitable gear, including a shield; keep all rods. Expert: Hgarth, Sun Rock Retreat. Artisan: Annora inside Uldaman (level 35 / skill 200); bring materials to 250. Formulas: Kulwia, Sun Rock—Minor Agility / Lesser Strength; Lesser Mana Oil—BRD/Silithus vendors or AH; Daniel Bartlett, Undercity—Shield Greater Stamina, BoP; Lorelae Wintersong, Moonglade—Arcanite Rod / Superior Defense. Buy the first Mote; dust conversion needs the rod already."
+          "text": "Reuse the same suitable gear, including a shield; keep all rods. Expert: Hgarth, Sun Rock Retreat. Artisan: Annora inside Uldaman (level 35 / skill 200); bring materials to 250. Vendor or AH for Bracer – Lesser Strength (Kulwia, Sun Rock), Lesser Mana Oil (BRD or Silithus) and Cloak – Superior Defense (Lorelae Wintersong, Moonglade). Buy the BoP formulas on your enchanter: Cloak – Minor Agility from Kulwia, Shield – Greater Stamina from Daniel Bartlett in Undercity, and Runed Arcanite Rod from Lorelae. Buy the first Mote; dust conversion needs the rod already."
         }
       ],
       "sourceHeading": "Enchanting"
@@ -1209,7 +1209,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "p",
-          "text": "Buy about 200 Empty, 110 Leaded and 80 Crystal Vials overall. Expert: Halsey, Undercity; Artisan: Rogvar, Stonard (level 35 / skill 200). Unlock the final potion via Rane Yorick’s Wild Hearts → Return to Quinn → Wild Eyes in Silverpine; 3 hearts + 3 of the eyes cover the quests."
+          "text": "Buy about 200 Empty, 110 Leaded and 80 Crystal Vials overall. Get Recipe: Superior Mana Potion from Algernon in Undercity or on the AH. Expert: Halsey, Undercity; Artisan: Rogvar, Stonard (level 35 / skill 200). Unlock the final potion via Rane Yorick’s Wild Hearts → Return to Quinn → Wild Eyes in Silverpine; 3 hearts + 3 of the eyes cover the quests."
         }
       ],
       "sourceHeading": "Alchemy"
@@ -1220,7 +1220,7 @@ window.ROSE_GUIDE = {
       "blocks": [
         {
           "type": "p",
-          "text": "Cooking expert: Book - Wulan, Shadowprey, Desolace."
+          "text": "At Cooking 125, get the Expert Cookbook from Wulan in Shadowprey Village, Desolace (1g base), or check the AH."
         },
         {
           "type": "p",
@@ -1228,7 +1228,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "p",
-          "text": "Fishing expert: Book - Old Man Heming, Booty Bay"
+          "text": "At level 20 / Fishing 125, get Expert Fishing – The Bass and You from Old Man Heming in Booty Bay (1g base), or check the AH."
         },
         {
           "type": "p",
@@ -1375,7 +1375,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "heading",
-          "text": "Recipe Sellers"
+          "text": "Fish recipes — vendor or AH"
         },
         {
           "type": "p",
@@ -1414,7 +1414,7 @@ window.ROSE_GUIDE = {
         },
         {
           "type": "p",
-          "text": "On your first Booty Bay visit, buy Expert Fishing – The Bass and You from Old Man Heming for 1g. You can read it at level 20 / Fishing 125. At level 35 / base Fishing 225, visit Nat Pagle in Dustwallow Marsh (58.6, 60.0). His four fish only drop with the quest active, so collect them as you pass Sar’theris Strand in Desolace, the Savage Coast south of Grom’gol, the Verdantis River in Feralas and Misty Reed Strand in Swamp of Sorrows."
+          "text": "Expert Fishing – The Bass and You requires level 20 / Fishing 125. Check the AH or buy it from Old Man Heming for 1g base when passing through Booty Bay. At level 35 / base Fishing 225, visit Nat Pagle in Dustwallow Marsh (58.6, 60.0). His four fish only drop with the quest active, so collect them as you pass Sar’theris Strand in Desolace, the Savage Coast south of Grom’gol, the Verdantis River in Feralas and Misty Reed Strand in Swamp of Sorrows."
         },
         {
           "type": "table",
@@ -1435,7 +1435,7 @@ window.ROSE_GUIDE = {
               "13–21",
               "Barrens lakes",
               "1 / 75",
-              "Fish visible Deviate Fish schools while doing Tonga’s oasis chain or waiting for your WC group. Sell raw or cook Savory Deviate Delight"
+              "Fish visible Deviate Fish schools while doing Tonga’s oasis chain or waiting for your WC group. Sell raw or cook Savory Deviate Delight. Its recipe drops in the Barrens and can be bought on the AH."
             ],
             [
               "14–23",
@@ -1453,13 +1453,13 @@ window.ROSE_GUIDE = {
               "30–40",
               "Nesingwary’s Expedition, northern Stranglethorn, from the little pier",
               "130 / 225",
-              "Fish Mithril Head Trout in open water and Greater Sagefish when a school appears. Cooked trout gives +20 attack power. Pick up the trout recipe from Kelsey Yance in Booty Bay."
+              "Fish Mithril Head Trout in open water and Greater Sagefish when a school appears. Cooked trout gives +20 attack power. Get the trout recipe from Kelsey Yance in Booty Bay or on the AH."
             ],
             [
               "40–48",
               "Steamwheedle Port, Tanaris, on your Zul’Farrak trip",
               "205 / 300",
-              "Best all-round stop. Catch Spotted Yellowtail and buy its recipe from Gikkix on the pier. Keep Winter Squid for +1% crit food, Stonescale Eels for Alchemy. Yellowtail alone can take Cooking 225–300 if you want to skip the later Mightfish farm."
+              "Best all-round stop. Catch Spotted Yellowtail. Gikkix on the pier sells the recipe, or check the AH. Keep Winter Squid for +1% crit food, Stonescale Eels for Alchemy. Yellowtail alone can take Cooking 225–300 if you want to skip the later Mightfish farm."
             ],
             [
               "42–50",

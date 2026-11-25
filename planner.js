@@ -9,30 +9,33 @@
   const crafts = ['Alchemy','Blacksmithing','Enchanting','Engineering','Leatherworking','Tailoring'];
   const professions = [...crafts,'Herbalism','Mining','Skinning'].sort();
   const levels = [5,10,20,25,35,45,60];
-  const descriptions = {5:'Park in an inn',10:'Journeyman training',20:'Expert training',25:'+1 LP',35:'Artisan training',45:'+1 LP',60:'+1 LP'};
+  const descriptions = {5:'Rest in an inn between sessions',10:'Journeyman training',20:'Expert training',25:'+1 LP',35:'Artisan training',45:'+1 LP',60:'+1 LP'};
   const ranks = [150,225,300], gates = [10,20,35], lpLevels = [25,45,60];
   // Broad material-demand bands for the guide's starter recipes. Actual stock and prices vary.
   const starterBand = {Enchanting:0, Alchemy:0, Leatherworking:1, Engineering:1, Tailoring:1, Blacksmithing:2};
   // The number beside each dungeon is the original guide's suggested run level.
-  const groups = [
+  const hordeGroups = [
     ['Novice', [['Ragefire Chasm',15],['Ruins of Lordaeron',18],['Wailing Caverns',20],['The Deadmines',20],['Shadowfang Keep',24],['Excavation Site: Wetlands',30]]],
     ['Experienced', [['Blackfathom Deeps',26],['Razorfen Kraul',30],['City of Dalaran',32],['Gnomeregan',32],['Scarlet Monastery: Graveyard',32],['Scarlet Monastery: Library',35],['Scarlet Monastery: Armoury',38],['The Drowned City',40],['Scarlet Monastery: Cathedral',40],["Krol'dok Stronghold",44]]],
     ['Master', [['Razorfen Downs',41],['Uldaman',45],["Zul'Farrak",47],['Maraudon',51],['Alcaz Prison',52],["The Temple of Atal'Hakkar",54],['Blackrock Depths',58],['Dire Maul: East',58],['Lower Blackrock Spire',58],['Blackmaw Hold',60],['Dire Maul: West',60],['Dire Maul: North',60],['Scholomance',60],['Stratholme: Live',60],['Stratholme: Dead',60],["The Shaper's Terrace",60],['Upper Blackrock Spire',60]]]
   ];
-  const key = 'rosethorn.planner.v2';
+  const allianceGroups = hordeGroups.map(([name,runs]) => [name, runs.map(run =>
+    run[0] === 'Ragefire Chasm' ? ['Hall of Thanes',16] : run)]);
+  const groups = () => window.GuideFaction.alliance ? allianceGroups : hordeGroups;
+  const key = () => window.GuideFaction.storageKey('rosethorn.planner.v2');
   const levelKey = (c,n) => 'level/'+c+'/'+n;
   const skillKey = (c,p,n) => 'skill/'+c+'/'+p+'/'+n;
   const dungeonKey = name => 'dungeon/'+name;
   function read(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
-  const relatedKeys = ['rosethorn.fieldguide.v1.character','rosethorn.fieldguide.v1.complete',
-    ...['',...classes].map(c=>'rosethorn.prequests.v1.'+c)];
+  const relatedKeys = () => ['rosethorn.fieldguide.v1.character','rosethorn.fieldguide.v1.complete',
+    ...['',...classes].map(c=>'rosethorn.prequests.v1.'+c)].map(k=>window.GuideFaction.storageKey(k));
   function emptyPlan() {
-    return {order:[],jobs:{},flags:{},started:false,otherLP:0,goal:16};
+    return {order:[],jobs:{},flags:{},started:false,otherLP:0,goal:null,goalChosen:false};
   }
   function savedGuideEntries() {
     const entries=[];
     try {
-      for (const key of relatedKeys) {
+      for (const key of relatedKeys()) {
         const value=localStorage.getItem(key);
         if (value!==null) entries.push([key,value]);
       }
@@ -40,23 +43,29 @@
     return entries;
   }
   function load() {
-    const stored = read(key);
+    const stored = read(key());
     const p = emptyPlan();
     if (stored && typeof stored === 'object') {
       p.order = [...new Set(Array.isArray(stored.order)?stored.order:[])].filter(c=>classes.includes(c));
       for (const c of classes) p.jobs[c] = [...new Set(Array.isArray(stored.jobs?.[c])?stored.jobs[c]:[])].filter(s=>professions.includes(s)).slice(0,2);
       if(stored.flags && typeof stored.flags==='object') p.flags=Object.fromEntries(Object.entries(stored.flags).filter(([,v])=>v===true));
+      for(const c of classes) {
+        const highest=level(p,c);
+        if(highest>=5)mark(p,levelKey(c,highest),true);
+      }
       p.started = stored.started===true;
       setOtherLP(p, stored.otherLP ?? 0);
       if(stored.goal===null || (Number.isSafeInteger(stored.goal) && stored.goal>0)) p.goal=stored.goal;
+      // Earlier builds assigned 16 to every plan and offered no target control.
+      p.goalChosen=stored.goalChosen===true || (stored.goalChosen==null && p.goal!=null && p.goal!==16);
     } else {
-      const legacy=read('rosethorn.fieldguide.v1.complete');
+      const legacy=read(window.GuideFaction.storageKey('rosethorn.fieldguide.v1.complete'));
       if(Array.isArray(legacy) && legacy.length) {
         copyPreset(p);
         for(const c of classes) for(const n of levels) {
           if(legacy.includes(c.toLowerCase()+'-'+n)) mark(p,levelKey(c,n),true);
         }
-        for(const [group,runs] of groups) {
+        for(const [group,runs] of groups()) {
           const old=(group==='Master'?'expert':group.toLowerCase())+'-spelunker';
           if(legacy.includes(old)) for(const [name] of runs) p.flags[dungeonKey(name)]=true;
         }
@@ -68,12 +77,12 @@
     p.order=classes.slice();
     p.jobs=Object.fromEntries(classes.map(c=>[c,preset[c].slice()]));
   }
-  function save(p) { try {localStorage.setItem(key,JSON.stringify(p)); return true;} catch {return false;} }
+  function save(p) { try {localStorage.setItem(key(),JSON.stringify(p)); return true;} catch {return false;} }
   function assigned(p,c) {return p.jobs[c] || [];}
   function mark(p,key,done) {
     const pieces=key.split('/'), value=Number(pieces.at(-1)), prefix=pieces.slice(0,-1).join('/')+'/';
     let keys=[key];
-    if(pieces[0]==='level' && value!==5) keys=levels.filter(n=>n!==5 && (done?n<=value:n>=value)).map(n=>prefix+n);
+    if(pieces[0]==='level' && levels.includes(value)) keys=levels.filter(n=>done?n<=value:n>=value).map(n=>prefix+n);
     if(pieces[0]==='skill') keys=ranks.filter(n=>done?n<=value:n>=value).map(n=>prefix+n);
     for(const item of keys) {if(done)p.flags[item]=true;else delete p.flags[item];}
   }
@@ -100,9 +109,9 @@
       skillLP++;
       if(plannedCrafts.has(s)) plannedDone++;
     }
-    const dungeonLP=groups.filter(([,runs])=>!missingRuns(p,runs).length).length;
+    const dungeonLP=groups().filter(([,runs])=>!missingRuns(p,runs).length).length;
     plannedDone+=dungeonLP;
-    const plannedMax=p.order.length*lpLevels.length+plannedCrafts.size*ranks.length+groups.length;
+    const plannedMax=p.order.length*lpLevels.length+plannedCrafts.size*ranks.length+groups().length;
     const otherLP=Number.isSafeInteger(p.otherLP) && p.otherLP>=0 ? p.otherLP : 0;
     return {earned:classLP+skillLP+dungeonLP+otherLP,classLP,skillLP,dungeonLP,otherLP,
       plannedDone,plannedMax,done:plannedDone,max:plannedMax};
@@ -121,7 +130,7 @@
       status=first?(first===id?'earned':'elsewhere'):'available';
       onCheck=ranks.filter(n=>n<=+last && !earned(p,tier,n)).length;
     } else if(kind==='dungeon' || kind==='spelunker') {
-      const group=groups.find(([heading,runs])=>kind==='spelunker'?heading===name:runs.some(([d])=>d===name));
+      const group=groups().find(([heading,runs])=>kind==='spelunker'?heading===name:runs.some(([d])=>d===name));
       if(group) {
         const remaining=missingRuns(p,group[1]);
         if(kind==='spelunker') status=remaining.length?'available':'earned';
@@ -163,7 +172,7 @@
       why:'Level 10 opens '+jobs.join(' and ')+' 150 for '+potential+' new profession LP. The points come from crafting. Banked materials and rested XP favour this route.'}};
   }
   function dungeonStep(p,closingOnly) {
-    for(const [group,runs] of groups) {
+    for(const [group,runs] of groups()) {
       const left=missingRuns(p,runs);
       if(closingOnly && left.length!==1) continue;
       for(const [d,n] of left) {
@@ -180,22 +189,14 @@
     const checkpoints=assigned(p,c).length?levels:[5,...lpLevels];
     const n=checkpoints.find(n=>n>current && n<=end);
     if(!n) return null;
-    return {key:levelKey(c,n),title:c+' · '+(n===5?'Reach level 5 and park in an inn':'Reach level '+n),
+    return {key:levelKey(c,n),title:c+' · Reach level '+n,
       why:n===5?'Build rested XP while you play your other characters.':lpLevels.includes(n)?'This class milestone earns 1 LP.':
         'This opens '+descriptions[n].toLowerCase()+' for your professions.'};
   }
   function withAlternative(step,alternative) {
     return alternative && step.key!==alternative.key?{...step,alternative}:step;
   }
-  function suggestion(p) {
-    if(!p.order.length) return null;
-    const goal=p.goal===undefined?16:p.goal;
-    const lead=p.order.find(c=>level(p,c)<60);
-    if(lead && goal>0 && totals(p).earned>=goal && !p.order.some(c=>level(p,c)===60)) {
-      const step=levelStep(p,lead,60);
-      return {...step,why:'Your '+goal+' LP target is met. Take '+lead+', the first unfinished class in your chosen order, to 60.'};
-    }
-    if(p.order.every(c=>level(p,c)===1)) return levelStep(p,p.order[0],5);
+  function pointSuggestion(p) {
     const first=craftChoices(p,150), pending=lowAlt(p,first);
     // At 10+ there is no levelling cost left to share. Compare starter routes first.
     // For equally economical routes favour a second point on one character, then roster order.
@@ -221,8 +222,6 @@
       return withAlternative(pending.step,expert?.step || otherStarter?.step);
     }
     if(expert) return expert.step;
-    const nearby=dungeonStep(p,false);
-    if(nearby) return nearby;
     const artisan=craftChoices(p,300).find(choice=>choice.ready);
     for(const end of lpLevels) {
       if(end===45 && artisan) return artisan.step;
@@ -233,5 +232,84 @@
     }
     return artisan?.step || null;
   }
-  window.WYHPlan={key,relatedKeys,emptyPlan,savedGuideEntries,classes,crafts,professions,levels,descriptions,ranks,groups,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,suggestion};
+  function priority(p) {
+    return p.goalChosen && Number.isSafeInteger(p.goal) && p.goal>0 ? p.goal : null;
+  }
+  function setPriority(p,goal) {
+    if(goal!==null && ![5,10,16].includes(goal) && goal!==priority(p))return false;
+    p.goal=goal;p.goalChosen=true;
+    return true;
+  }
+  function milestoneOrder(p) {
+    // Project against a separate flag map. Reuse the board's credit and
+    // completion rules for every action, including previously trained crafts.
+    const sim={...p,flags:{...p.flags}};
+    const startLP=totals(p).earned,target=priority(p);
+    const result={startLP,target,phases:[],projectedLP:startLP,reachedGoal:!!target && startLP>=target};
+    if(!p.order.length)return result;
+    function add(phase,step) {
+      if(sim.flags[step.key])return;
+      mark(sim,step.key,true);
+      const total=totals(sim).earned;
+      phase.steps.push({...step,lp:total-result.projectedLP,total});
+      result.projectedLP=total;
+    }
+    function addSkill(phase,c,prof,rank,why) {
+      for(const n of ranks) {
+        if(n>rank)break;
+        const key=skillKey(c,prof,n);
+        if(sim.flags[key])continue;
+        const crafting=crafts.includes(prof);
+        const reason=(n===rank && why) || (crafting
+          ? (earned(sim,prof,n)?'This tier is already credited. Train it on '+c+' to progress towards 300.':'The first '+prof+' '+n+' earns a crafting LP.')
+          : 'Gather while levelling '+c+'. This skill checkpoint follows your route.');
+        add(phase,{key,title:c+' · '+prof+' '+n,why:reason});
+      }
+    }
+    const gatherAt={25:150,45:225,60:300};
+    function gatherOnRoute(phase,c) {
+      for(const prof of assigned(sim,c)) {
+        if(crafts.includes(prof))continue;
+        for(const n of lpLevels)if(level(sim,c)>=n)addSkill(phase,c,prof,gatherAt[n]);
+      }
+    }
+    function phase(title) {
+      const row={title,steps:[]};
+      result.phases.push(row);return row;
+    }
+    if(target && startLP<target) {
+      const row=phase('Work towards '+target+' LP');
+      while(result.projectedLP<target) {
+        const next=pointSuggestion(sim);
+        if(!next || sim.flags[next.key])break;
+        const [kind,c,prof,rank]=next.key.split('/');
+        if(kind==='skill') {
+          addSkill(row,c,prof,Number(rank),next.why);
+          if(next.alternative)row.steps.at(-1).alternative=next.alternative;
+        } else {
+          add(row,next);
+          if(kind==='level')gatherOnRoute(row,c);
+        }
+      }
+      result.reachedGoal=result.projectedLP>=target;
+    }
+    for(const c of sim.order) {
+      const atCap=level(sim,c)>=60;
+      const row=phase(atCap?'Finish '+c+' professions':c+' to level 60');
+      gatherOnRoute(row,c);
+      while(level(sim,c)<60) {
+        const next=levelStep(sim,c,60);
+        if(!next)break;
+        const n=Number(next.key.split('/').at(-1));
+        add(row,{...next,why:lpLevels.includes(n)?'This class milestone earns 1 LP.':
+          'Level '+c+' in your selected roster order. Log off in an inn for rested XP.'});
+        gatherOnRoute(row,c);
+      }
+      for(const prof of assigned(sim,c))addSkill(row,c,prof,300);
+    }
+    result.phases=result.phases.filter(row=>row.steps.length);
+    return result;
+  }
+  function suggestion(p) {return milestoneOrder(p).phases[0]?.steps[0] || null;}
+  window.WYHPlan={get key(){return key();}, get relatedKeys(){return relatedKeys();},get groups(){return groups();},emptyPlan,savedGuideEntries,classes,crafts,professions,levels,descriptions,ranks,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,priority,setPriority,milestoneOrder,suggestion};
 })();
