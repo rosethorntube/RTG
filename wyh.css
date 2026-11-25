@@ -22,7 +22,7 @@
 .wyh h2{font-size:clamp(1.85rem,3.1vw,2.65rem);letter-spacing:-.033em;line-height:1.1}
 .wyh-section-heading{display:flex;gap:4px 18px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;margin-bottom:16px}
 .wyh-section-heading p{color:#b5b9a9;font-size:.87rem}
-.wyh-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(18px,2.1vw,32px)}
+.wyh-gallery{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(18px,2.1vw,32px)}
 .wyh-gallery figure:first-child{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:clamp(18px,4vw,62px);align-items:center;background:#1b2522;border:1px solid var(--wyh-line);border-radius:5px;overflow:hidden}
 .wyh-gallery figure:first-child .wyh-shot{margin:-1px 0 -1px -1px}
 .wyh-gallery figure:first-child figcaption{padding:16px clamp(16px,3vw,42px) 16px 0}

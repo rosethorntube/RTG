@@ -62,3 +62,58 @@
 .order-limit { color: var(--gold); font-size: .86rem; }
 .order-more { margin: 0 0 .6rem 1.3rem; }
 .order-more > summary { padding: .25rem 0; color: var(--gold); font-size: .85rem; cursor: pointer; }
+
+.order-forecast { color: #d5c8aa; font-size: .86rem; line-height: 1.5; margin: .65rem 0; }
+.gold-budget { margin: 0 0 16px; }
+.milestone-order .gold-budget { margin: .8rem 0 .6rem; background: #222722; }
+.gold-budget > summary { cursor: pointer; color: var(--paper); }
+.gold-budget[open] > summary { margin-bottom: 12px; }
+.budget-summary {
+  display: inline-block;
+  margin-left: .6rem;
+  color: #c7c8b9;
+  font-size: .8rem;
+  line-height: 1.4;
+}
+.budget-fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit,minmax(min(100%, 10rem),1fr));
+  gap: 9px 14px;
+  align-items: end;
+}
+.budget-field { display: flex; flex-direction: column; gap: 5px; color: #d8d4c1; font-size: .85rem; }
+.budget-gold {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  padding: 4px 7px;
+  background: #171c18;
+  color: var(--paper);
+  border: 1px solid #6b6752;
+  border-radius: 4px;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+.budget-mount { display:flex; align-items:center; gap:7px; min-height:34px; font-size: .85rem; }
+.budget-copy { max-width: 75ch; }
+.budget-copy a,.budget-estimates > summary { color: var(--gold); }
+.budget-estimates > summary { cursor:pointer; font-size: .86rem; }
+.budget-cost-table { max-width: 34rem; margin: .5rem 0 0; }
+.budget-cost-table td { padding: 3px 4px; }
+.budget-cost-table th:first-child { width: 36%; padding-right: 5px; overflow-wrap:anywhere; }
+.order-price {
+  display:inline-block;
+  margin-left: .5rem;
+  color:#c8c9bb;
+  font-size:.76rem;
+  font-variant-numeric:tabular-nums;
+}
+.next-tip .next-price { margin-top: .2rem; color:var(--gold); }
+@media(max-width:440px){
+  .budget-summary { display:block; margin: .25rem 0 0 1rem; }
+  .budget-cost-table td { padding-inline: 2px; }
+  .budget-cost-table .budget-gold { padding-inline: 3px; }
+  .character-levels-table th:first-child {width:23%; overflow-wrap:anywhere}
+  .character-levels-table td.lp-cell .reward-tag {font-size:8px;overflow-wrap:anywhere}
+}

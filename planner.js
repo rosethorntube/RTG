@@ -8,8 +8,8 @@
   const classes = Object.keys(preset);
   const crafts = ['Alchemy','Blacksmithing','Enchanting','Engineering','Leatherworking','Tailoring'];
   const professions = [...crafts,'Herbalism','Mining','Skinning'].sort();
-  const levels = [5,10,20,25,35,45,60];
-  const descriptions = {5:'Rest in an inn between sessions',10:'Journeyman training',20:'Expert training',25:'+1 LP',35:'Artisan training',45:'+1 LP',60:'+1 LP'};
+  const levels = [5,10,20,25,30,35,40,45,60];
+  const descriptions = {5:'Rest in an inn between sessions',10:'Journeyman training',20:'Expert training',25:'+1 LP',30:'Optional early alt start',35:'Artisan training and usual alt start',40:'First mount',45:'+1 LP',60:'+1 LP'};
   const ranks = [150,225,300], gates = [10,20,35], lpLevels = [25,45,60];
   // Broad material-demand bands for the guide's starter recipes. Actual stock and prices vary.
   const starterBand = {Enchanting:0, Alchemy:0, Leatherworking:1, Engineering:1, Tailoring:1, Blacksmithing:2};
@@ -54,6 +54,7 @@
         if(highest>=5)mark(p,levelKey(c,highest),true);
       }
       p.started = stored.started===true;
+      if(stored.budget && typeof stored.budget==='object')p.budget=stored.budget;
       setOtherLP(p, stored.otherLP ?? 0);
       if(stored.goal===null || (Number.isSafeInteger(stored.goal) && stored.goal>0)) p.goal=stored.goal;
       // Earlier builds assigned 16 to every plan and offered no target control.
@@ -143,95 +144,121 @@
     const eligible=['earned','available','elsewhere'].includes(status);
     return {eligible,value:eligible?1:0,points:status==='available'?1:0,status,onCheck,creditedTo};
   }
-  function craftChoices(p,n) {
-    const i=ranks.indexOf(n);
-    const choices=[];
-    for(const c of p.order) for(const s of assigned(p,c)) {
-      if(!crafts.includes(s) || earned(p,s,n)) continue;
-      const step={key:skillKey(c,s,n),title:c+' · Reach '+s+' '+n};
-      const ready=level(p,c)>=gates[i];
-      const previous=i>0 && !!p.flags[skillKey(c,s,ranks[i-1])];
-      step.why=n===150?'The first '+s+' 150 earns 1 LP. '+(starterBand[s]===0?'The guide has a low-cost starter route. ':'')+
-        'If you have materials for a different craft, use those first. The board cannot see your bags or realm prices.'
-        :'The first '+s+' '+n+' earns 1 LP. '+(previous?'The previous tier is recorded on this character. ':'')+
-         'Take this route first if your actual skill is close or the materials are ready. The board records tiers and cannot see your bags.';
-      choices.push({c,s,ready,previous,step});
+
+  const goldValue = value => typeof value==='number' && Number.isFinite(value) && value>=0 && value<=1000000
+    ? Math.round(value*100)/100 : null;
+  const toSilver = gold => Math.round(gold*100);
+  const mainClass = p => p.order[0];
+  const hasClassMount = c => c==='Warlock'||c==='Paladin';
+  const defaultMountCost = c => hasClassMount(c)?0:100;
+  function craftCost(p,prof,rank) {
+    const value=goldValue(p.budget?.costs?.[prof]?.[rank]);
+    return value ?? (rank===150?5:null);
+  }
+  function budget(p) {
+    const main=mainClass(p);
+    const prefs=p.budget || {};
+    const mount=prefs.mounts?.[main];
+    const gold=goldValue(prefs.gold);
+    const mountCost=goldValue(mount?.cost)??defaultMountCost(main);
+    const mountDone=mount?.done===true;
+    const reserve=main && !mountDone?mountCost:0;
+    const spendable=gold===null?null:Math.max(0,toSilver(gold)-toSilver(reserve))/100;
+    let starterCount=0,starterCost=0;
+    for(const c of p.order) for(const prof of assigned(p,c)) {
+      if(!crafts.includes(prof) || p.flags[skillKey(c,prof,150)])continue;
+      starterCount++;
+      starterCost+=toSilver(craftCost(p,prof,150));
     }
-    // Prefer the character who has actually worked on this trade, then the player's order.
-    return choices.sort((a,b)=>Number(b.previous)-Number(a.previous));
+    return {main,gold,altLevel:prefs.altLevel===30?30:35,mountCost,mountDone,
+      mountShortfall:gold===null?null:Math.max(0,toSilver(reserve)-toSilver(gold))/100,
+      spendable,starterCount,starterCost:starterCost/100};
   }
-  function lowAlt(p,options) {
-    const candidates=p.order.map(c=>({c,level:level(p,c),jobs:options.filter(o=>o.c===c).map(o=>o.s)
-      .sort((a,b)=>starterBand[a]-starterBand[b])}))
-      .filter(t=>t.level<10 && t.jobs.length).sort((a,b)=>b.jobs.length-a.jobs.length || b.level-a.level
-        || starterBand[a.jobs[0]]-starterBand[b.jobs[0]]);
-    if(!candidates.length) return null;
-    const {c,level:current,jobs}=candidates[0];
-    const potential=jobs.length;
-    return {level:current,potential,jobs,step:{key:levelKey(c,10),title:c+' · Reach level 10',
-      why:'Level 10 opens '+jobs.join(' and ')+' 150 for '+potential+' new profession LP. The points come from crafting. Banked materials and rested XP favour this route.'}};
+  function setBudgetValue(p,kind,value,prof,rank) {
+    const v=goldValue(value);
+    if(kind==='gold' && (v!==null || value===null)) {
+      p.budget={...p.budget,gold:v};
+    } else if(kind==='altLevel' && (value===30||value===35)) {
+      p.budget={...p.budget,altLevel:value};
+    } else if((kind==='mountCost' || kind==='mountDone') && mainClass(p)) {
+      if(kind==='mountCost' && v===null && value!==null) return false;
+      if(kind==='mountDone' && typeof value!=='boolean') return false;
+      const main=mainClass(p),mounts={...p.budget?.mounts};
+      mounts[main]={...mounts[main],[kind==='mountDone'?'done':'cost']:kind==='mountDone'?value:v};
+      p.budget={...p.budget,mounts};
+    } else if(kind==='cost' && crafts.includes(prof) && ranks.includes(rank) && (v!==null || value===null)) {
+      const costs={...p.budget?.costs};
+      costs[prof]={...costs[prof],[rank]:v};
+      p.budget={...p.budget,costs};
+    } else return false;
+    return true;
   }
-  function dungeonStep(p,closingOnly) {
+  function hasBudget(p) {
+    const prefs=p.budget;
+    if(!prefs)return false;
+    return goldValue(prefs.gold)!==null || prefs.altLevel===30 ||
+      Object.entries(prefs.mounts || {}).some(([name,m])=>m?.done===true ||
+        (goldValue(m?.cost)!==null && m.cost!==defaultMountCost(name))) ||
+      crafts.some(prof=>ranks.some(n=>craftCost(p,prof,n)!==(n===150?5:null)));
+  }
+
+  function dungeonStep(p) {
     for(const [group,runs] of groups()) {
       const left=missingRuns(p,runs);
-      if(closingOnly && left.length!==1) continue;
-      for(const [d,n] of left) {
-        const c=p.order.find(c=>level(p,c)>=n);
-        if(c) return {key:dungeonKey(d),title:c+' · Clear '+d,why:left.length===1
-          ?'This is the last recorded clear needed for '+group+' Spelunker and its 1 LP.'
-          :'Your '+c+' has reached the suggested run level. Defeat the final boss towards '+group+' Spelunker.'};
-      }
+      if(left.length!==1)continue;
+      const [[name,runLevel]]=left;
+      const c=p.order.find(c=>level(p,c)>=runLevel);
+      if(c)return {key:dungeonKey(name),title:c+' — Clear '+name,
+        why:'This is the final clear for '+group+' Spelunker and its 1 LP.'};
     }
     return null;
   }
+
   function levelStep(p,c,end) {
     const current=level(p,c);
-    const checkpoints=assigned(p,c).length?levels:[5,...lpLevels];
+    const checkpoints=c===mainClass(p)?[5,10,20,25,30,35,40,45,60]:
+      assigned(p,c).length?[5,10,20,25,35,45,60]:[5,...lpLevels];
     const n=checkpoints.find(n=>n>current && n<=end);
-    if(!n) return null;
-    return {key:levelKey(c,n),title:c+' · Reach level '+n,
-      why:n===5?'Build rested XP while you play your other characters.':lpLevels.includes(n)?'This class milestone earns 1 LP.':
-        'This opens '+descriptions[n].toLowerCase()+' for your professions.'};
+    if(!n)return null;
+    const gather=assigned(p,c).filter(prof=>!crafts.includes(prof));
+    const why=lpLevels.includes(n)?'This class milestone earns 1 LP.':
+      n===5?'Log out in an inn between sessions to build rested XP.':
+      n===40?'Reach level 40 to unlock the first mount.': 'Continue levelling '+c+'.';
+    return {key:levelKey(c,n),title:c+' — Reach level '+n,
+      why:why+(gather.length?' Pick up '+gather.join(' and ')+' materials along the way.':'')};
   }
-  function withAlternative(step,alternative) {
-    return alternative && step.key!==alternative.key?{...step,alternative}:step;
-  }
-  function pointSuggestion(p) {
-    const first=craftChoices(p,150), pending=lowAlt(p,first);
-    // At 10+ there is no levelling cost left to share. Compare starter routes first.
-    // For equally economical routes favour a second point on one character, then roster order.
-    const ready=first.filter(o=>o.ready);
-    const counts=Object.fromEntries(p.order.map(c=>[c,ready.filter(o=>o.c===c).length]));
-    ready.sort((a,b)=>starterBand[a.s]-starterBand[b.s] || counts[b.c]-counts[a.c]);
-    const readyFirst=ready[0];
-    const expert=craftChoices(p,225).find(choice=>choice.ready);
-    if(readyFirst) {
-      const otherJob=ready.find(o=>o.c===readyFirst.c && o.s!==readyFirst.s);
-      if(otherJob) readyFirst.step.why+=' '+otherJob.s+' 150 can earn a second LP on this character without further levelling.';
-      const otherStarter=ready.find(o=>o.s!==readyFirst.s)?.step ||
-        lowAlt(p,first.filter(o=>o.s!==readyFirst.s))?.step;
-      return withAlternative(readyFirst.step,expert?.previous?expert.step:otherStarter);
-    }
-    const closing=dungeonStep(p,true);
-    if(closing) return withAlternative(closing,expert?.step || pending?.step);
-    if(pending) {
-      // A fresh one-craft alt has a complete level grind before it can earn its point.
-      if(expert?.previous && pending.level===1 && pending.potential===1)
-        return withAlternative(expert.step,pending.step);
-      const otherStarter=lowAlt(p,first.filter(o=>!pending.jobs.includes(o.s)));
-      return withAlternative(pending.step,expert?.step || otherStarter?.step);
-    }
-    if(expert) return expert.step;
-    const artisan=craftChoices(p,300).find(choice=>choice.ready);
-    for(const end of lpLevels) {
-      if(end===45 && artisan) return artisan.step;
-      for(const c of p.order) {
-        const step=levelStep(p,c,end);
-        if(step) return step;
+
+  function nextCraft(p,spendable,maxRank,altsOnly=false) {
+    const options=[];
+    for(const c of p.order) {
+      if(altsOnly && c===mainClass(p))continue;
+      for(const prof of assigned(p,c)) {
+        if(!crafts.includes(prof))continue;
+        const i=ranks.findIndex(n=>!p.flags[skillKey(c,prof,n)]);
+        const rank=ranks[i];
+        if(!rank || rank>maxRank || earned(p,prof,rank))continue;
+        const cost=craftCost(p,prof,rank);
+        const current=level(p,c);
+        if(cost===null || toSilver(cost)>spendable || (current<gates[i] && i>0))continue;
+        options.push({c,prof,rank,cost,current,gate:gates[i]});
       }
     }
-    return artisan?.step || null;
+    options.sort((a,b)=>Number(b.current>=b.gate)-Number(a.current>=a.gate) ||
+      a.cost-b.cost || starterBand[a.prof]-starterBand[b.prof] || b.current-a.current ||
+      p.order.indexOf(a.c)-p.order.indexOf(b.c));
+    const choice=options[0];
+    if(!choice)return null;
+    const {c,prof,rank,cost,current,gate}=choice;
+    const price=cost===0?'Covered by your budgeted supplies.':'Allow '+cost+'g from the spending budget.';
+    return current<gate?{
+      key:levelKey(c,gate),title:c+' — Reach level '+gate,
+      why:'Then take '+prof+' to '+rank+' for 1 LP. '+price
+    }:{
+      key:skillKey(c,prof,rank),title:c+' — Reach '+prof+' '+rank,
+      cost,why:'The first '+prof+' '+rank+' earns 1 LP. '+price
+    };
   }
+
   function priority(p) {
     return p.goalChosen && Number.isSafeInteger(p.goal) && p.goal>0 ? p.goal : null;
   }
@@ -240,76 +267,146 @@
     p.goal=goal;p.goalChosen=true;
     return true;
   }
+
   function milestoneOrder(p) {
-    // Project against a separate flag map. Reuse the board's credit and
-    // completion rules for every action, including previously trained crafts.
     const sim={...p,flags:{...p.flags}};
-    const startLP=totals(p).earned,target=priority(p);
-    const result={startLP,target,phases:[],projectedLP:startLP,reachedGoal:!!target && startLP>=target};
-    if(!p.order.length)return result;
-    function add(phase,step) {
-      if(sim.flags[step.key])return;
-      mark(sim,step.key,true);
-      const total=totals(sim).earned;
-      phase.steps.push({...step,lp:total-result.projectedLP,total});
-      result.projectedLP=total;
-    }
-    function addSkill(phase,c,prof,rank,why) {
-      for(const n of ranks) {
-        if(n>rank)break;
-        const key=skillKey(c,prof,n);
-        if(sim.flags[key])continue;
-        const crafting=crafts.includes(prof);
-        const reason=(n===rank && why) || (crafting
-          ? (earned(sim,prof,n)?'This tier is already credited. Train it on '+c+' to progress towards 300.':'The first '+prof+' '+n+' earns a crafting LP.')
-          : 'Gather while levelling '+c+'. This skill checkpoint follows your route.');
-        add(phase,{key,title:c+' · '+prof+' '+n,why:reason});
-      }
-    }
-    const gatherAt={25:150,45:225,60:300};
-    function gatherOnRoute(phase,c) {
-      for(const prof of assigned(sim,c)) {
-        if(crafts.includes(prof))continue;
-        for(const n of lpLevels)if(level(sim,c)>=n)addSkill(phase,c,prof,gatherAt[n]);
-      }
-    }
+    const startLP=totals(p).earned,target=priority(p),cash=budget(p);
+    const result={startLP,target,phases:[],projectedLP:startLP,fundedLP:startLP,spend:0,reachedGoal:!!target&&startLP>=target};
+    const {main,gold,mountDone,mountCost,mountShortfall,altLevel}=cash;
+    if(!main)return result;
+    let wallet=toSilver(gold ?? 0), mounted=mountDone;
+    const spare=()=>Math.max(0,wallet-(mounted?0:toSilver(mountCost)));
+    const wantsLP=()=>target!==null && result.fundedLP<target;
+
     function phase(title) {
       const row={title,steps:[]};
-      result.phases.push(row);return row;
+      result.phases.push(row);
+      return row;
     }
-    if(target && startLP<target) {
-      const row=phase('Work towards '+target+' LP');
-      while(result.projectedLP<target) {
-        const next=pointSuggestion(sim);
-        if(!next || sim.flags[next.key])break;
-        const [kind,c,prof,rank]=next.key.split('/');
-        if(kind==='skill') {
-          addSkill(row,c,prof,Number(rank),next.why);
-          if(next.alternative)row.steps.at(-1).alternative=next.alternative;
-        } else {
-          add(row,next);
-          if(kind==='level')gatherOnRoute(row,c);
+    function add(row,step) {
+      if(sim.flags[step.key])return false;
+      const mount=step.key.startsWith('mount/');
+      const previous=totals(sim).earned;
+      mark(sim,step.key,true);
+      const total=totals(sim).earned,lp=total-previous;
+      if(!step.funding) {
+        if(mount)mounted=true;
+        if(step.cost!==null && step.cost!==undefined) {
+          wallet-=toSilver(step.cost);
+          if(!mount)result.spend+=toSilver(step.cost);
+        }
+        result.fundedLP+=lp;
+      }
+      row.steps.push({...step,lp,total});
+      result.projectedLP=total;
+      return true;
+    }
+    function advance(row,c,end,why='',alternative=null) {
+      let step, first=true;
+      while((step=levelStep(sim,c,end))) {
+        const extra=first&&why?' '+why:'';
+        add(row,{...step,why:step.why+extra,alternative:first?alternative:null});
+        first=false;
+      }
+    }
+    function starterWave(title,limit,maxRank=150) {
+      if(!wantsLP())return;
+      const row=phase(title);
+      const starterPoints=()=>crafts.filter(prof=>earned(sim,prof,150)).length;
+      while(wantsLP() && (starterPoints()<limit || maxRank>150)) {
+        const step=nextCraft(sim,spare(),maxRank);
+        if(!step || !add(row,step))break;
+      }
+    }
+    function closeDungeon() {
+      if(!wantsLP())return;
+      const step=dungeonStep(sim);
+      if(step)add(phase('Finish a Spelunker set'),step);
+    }
+
+    if(level(sim,main)<40) {
+      const row=phase(main+' to level 40');
+      const reserveText=mountDone||mountCost===0?'':gold===null?
+        'Set aside '+mountCost+'g for riding. Enter your gold to check what you can spend.':
+        mountShortfall>0?'Keep saving for riding. You are '+mountShortfall+'g short.':
+        'Keep '+mountCost+'g available for riding.';
+      if(level(sim,main)<altLevel)advance(row,main,altLevel,reserveText);
+      let alternate=null;
+      if(wantsLP() && (mountDone || mountCost===0 || (gold!==null && mountShortfall===0)))
+        alternate=nextCraft(sim,spare(),150,true);
+      if(alternate)alternate={...alternate,why:'A short alt break is affordable. '+alternate.why};
+      advance(row,main,40,reserveText,alternate);
+    }
+    if(!mounted && wallet>=toSilver(mountCost)) {
+      const row=phase(main+' — First mount');
+      const freeClassMount=mountCost===0 && hasClassMount(main);
+      const why=freeClassMount?'Complete your level-40 mount quest.':
+        mountCost>0?'Your budget covers '+mountCost+'g for riding and the first mount quest.':
+        'Learn Apprentice Riding and complete the first mount quest.';
+      add(row,{key:'mount/'+main,cost:mountCost,title:main+(freeClassMount?' — Complete your class mount quest':' — Get your level-40 mount'),
+        why:why+' Tick the mount when you have it.'});
+    }
+    if(level(sim,main)<45) {
+      closeDungeon();
+      if(mounted)starterWave('Fund up to two starter crafts before level 45',2);
+      const short=mounted?'':gold===null?'Record your gold to see what you still need for riding.':
+        'Keep questing for mount gold. You are '+mountShortfall+'g short.';
+      advance(phase(main+' to level 45'),main,45,short);
+    }
+    if(level(sim,main)<60) {
+      closeDungeon();
+      if(mounted)starterWave('Fund more starter crafts before level 60',4);
+      const short=mounted?'':gold===null?'Record your gold to see what you still need for riding.':
+        'Keep questing for mount gold. You are '+mountShortfall+'g short.';
+      advance(phase(main+' to level 60'),main,60,short);
+    }
+
+    closeDungeon();
+    if(mounted) {
+      starterWave('Fund starter crafts for Legacy Points',crafts.length);
+      starterWave('Fund higher crafting tiers for Legacy Points',crafts.length,300);
+    }
+    if(wantsLP()) {
+      for(const c of p.order.slice(1)) {
+        if(!wantsLP())break;
+        if(level(sim,c)<25)advance(phase(c+' to level 25 for a class point'),c,25);
+        if(mounted)starterWave('Use available gold for crafting Legacy Points',crafts.length,300);
+      }
+    }
+    for(const c of p.order) {
+      if(level(sim,c)<60)advance(phase(c+' to level 60'),c,60);
+    }
+    function finishProfessions(fundedOnly) {
+      const row=phase(fundedOnly?'Finish professions within your budget':'Finish professions when funded');
+      for(const c of p.order) for(const prof of assigned(p,c)) {
+        let blocked=false;
+        for(const rank of ranks) {
+          const key=skillKey(c,prof,rank);
+          if(sim.flags[key])continue;
+          const isCraft=crafts.includes(prof);
+          const cost=isCraft?craftCost(p,prof,rank):null;
+          const funding=isCraft && (blocked?'prerequisite':cost===null?'unpriced':toSilver(cost)>spare()?'short':null);
+          if(fundedOnly && funding)break;
+          if(funding)blocked=true;
+          add(row,{key,title:c+' — '+prof+' '+rank,cost,
+            funding:funding||null,why:funding==='unpriced'?'Price the materials and training for this tier before spending.':
+              funding==='short'?'Set aside more gold for this tier.':
+              funding==='prerequisite'?'Fund and finish the earlier tier first.':
+              isCraft?'Train this tier with the money set aside for it.':'Gather while levelling '+c+'. This is a skill checkpoint.'});
         }
       }
-      result.reachedGoal=result.projectedLP>=target;
     }
-    for(const c of sim.order) {
-      const atCap=level(sim,c)>=60;
-      const row=phase(atCap?'Finish '+c+' professions':c+' to level 60');
-      gatherOnRoute(row,c);
-      while(level(sim,c)<60) {
-        const next=levelStep(sim,c,60);
-        if(!next)break;
-        const n=Number(next.key.split('/').at(-1));
-        add(row,{...next,why:lpLevels.includes(n)?'This class milestone earns 1 LP.':
-          'Level '+c+' in your selected roster order. Log off in an inn for rested XP.'});
-        gatherOnRoute(row,c);
-      }
-      for(const prof of assigned(sim,c))addSkill(row,c,prof,300);
-    }
+    // Run the cash-backed route before recording any conditional skill milestones.
+    finishProfessions(true);
+    finishProfessions(false);
     result.phases=result.phases.filter(row=>row.steps.length);
+    result.reachedGoal=!!target && result.fundedLP>=target;
+    result.spend/=100;
     return result;
   }
-  function suggestion(p) {return milestoneOrder(p).phases[0]?.steps[0] || null;}
-  window.WYHPlan={get key(){return key();}, get relatedKeys(){return relatedKeys();},get groups(){return groups();},emptyPlan,savedGuideEntries,classes,crafts,professions,levels,descriptions,ranks,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,priority,setPriority,milestoneOrder,suggestion};
+  function suggestion(p) {
+    return milestoneOrder(p).phases.flatMap(row=>row.steps).find(step=>!step.funding) || null;
+  }
+
+  window.WYHPlan={get key(){return key();}, get relatedKeys(){return relatedKeys();},get groups(){return groups();},emptyPlan,savedGuideEntries,classes,crafts,professions,levels,descriptions,ranks,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,budget,craftCost,setBudgetValue,hasBudget,priority,setPriority,milestoneOrder,suggestion};
 })();
