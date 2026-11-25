@@ -1,10 +1,10 @@
 (() => {
   'use strict';
   const phases = {
-    before: ['Pick up before entering', 'Pick up for the run'],
-    inside: ['Inside the dungeon', 'Pick up inside'],
-    followup: ['After the run', 'After the dungeon objective'],
-    check: ['Check pickup location', 'Pickup location unlisted']
+    before: 'Before the run',
+    inside: 'Inside the dungeon',
+    followup: 'After the run',
+    check: 'Check pickup location'
   };
   const state = new Map();
   const node = (tag, css, text) => {
@@ -142,14 +142,20 @@
     };
     return {load,has,set};
   }
-  function sharing(id) {
-    const entry=window.WYH_QUEST_SHARING?.[id];
-    const known=typeof entry?.share==='boolean';
-    const text=known ? (entry.share?'Shareable':'Pick up individually') : 'Sharing unlisted';
-    const badge=node('span','dq-sharing',text);
-    badge.dataset.sharing=known ? String(entry.share) : 'unlisted';
-    badge.title=known ? (entry.share?'A party member can share this step with an eligible player.':'Each player must pick up this step independently.')
-      : 'The available quest records do not establish whether this step can be shared.';
+  function sharing(id,prep) {
+    const data=window.WYH_QUEST_SHARING?.[id]?.share;
+    const status=prep || (data===true?'true':data===false?'false':'unverified');
+    const labels={
+      chain:['Do prerequisites yourself','Complete the required steps on this character before taking the dungeon quest.'],
+      starter:['Start the chain yourself','This quest starts a chain you need to progress on this character.'],
+      true:['Shareable','A party member with this quest can share it with an eligible character.'],
+      false:['Pick up yourself','Each player must pick up this quest individually.'],
+      unverified:['Sharing unverified','Plan to pick this up yourself. The available quest records do not confirm sharing.']
+    };
+    const [label,help]=labels[status];
+    const badge=node('span','dq-sharing',label);
+    badge.dataset.sharing=status;
+    badge.title=help;
     return badge;
   }
   function phaseOf(objective) { return phases[objective.phase] ? objective.phase : 'check'; }
@@ -160,7 +166,7 @@
     const visits=parent=>inside.has(String(parent)) || (quests[parent] && requiresInstancePickup(quests[parent],quests,inside,next));
     return list(q.requires).some(visits) || (list(q.any).length>0 && list(q.any).every(visits));
   }
-  function questRow(q,role,context,showSharing=true) {
+  function questRow(q,role,context,sharingBadge) {
     const {tracker,marks,changes,quests}=context;
     const id=String(q.id);
     const active=context.keepActive.has(id);
@@ -175,7 +181,7 @@
     const tick=node('label','dq-check-hit');
     tick.append(check);
     heading.append(name);
-    if(showSharing)heading.append(sharing(id));
+    if(sharingBadge)heading.append(sharingBadge);
     info.append(heading);
     const meta=[];
     if(role)meta.push(role);
@@ -257,15 +263,16 @@
     header.append(heading,completion);host.append(header);
     const coverage=typeof run.coverage==='string'?run.coverage:run.coverage?.[faction];
     if(coverage)host.append(node('p','dq-coverage',coverage));
-    const phaseGroups={before:[],inside:[],followup:[],check:[],class:[]};
+    const phaseGroups={personal:[],shareable:[],inside:[],followup:[],check:[]};
     for(const step of objectives) {
       const quest=quests[step.id];
       const phase=step.phase==='before' && requiresInstancePickup(quest,quests,inside)?'followup':phaseOf(step);
-      phaseGroups[common[step.id]?phase:'class'].push({id:String(step.id),phase});
+      const id=String(step.id),inChain=chainMembers.has(id);
+      let group=phase;
+      if(phase==='before')group=!inChain && window.WYH_QUEST_SHARING?.[id]?.share===true?'shareable':'personal';
+      phaseGroups[group].push({id,phase,inChain});
     }
-    const phaseOrder=Object.keys(phases);
-    phaseGroups.before.sort((left,right)=>Number(!!deps(quests[left.id]).length)-Number(!!deps(quests[right.id]).length));
-    phaseGroups.class.sort((left,right)=>phaseOrder.indexOf(left.phase)-phaseOrder.indexOf(right.phase));
+    phaseGroups.personal.sort((left,right)=>Number(!!deps(quests[left.id]).length)-Number(!!deps(quests[right.id]).length));
     function update(message) {
       if(message){completion.textContent=message;return;}
       if(!rootIds.size)return;
@@ -281,12 +288,20 @@
       if(!steps.length)return;
       const section=node('section','dq-group');
       section.dataset.questGroup=key;
-      const title=key==='class'?character+' quests':phases[key][0];
+      const title=key==='personal'?'Do these yourself before the run':
+        key==='shareable'?'Can be shared':phases[key];
       section.append(node('h4','dq-group-title',title));
+      if(key==='personal')section.append(node('p','dq-group-note',
+        'Pick these up or finish their prerequisites on this character. A shared step still requires the earlier quests.'));
+      if(key==='shareable')section.append(node('p','dq-group-note',
+        'Pick these up yourself or have a party member who has the quest share it with you.'));
       const entries=node('ul','dq-direct');
       for(const step of steps) {
         const quest=quests[step.id], neededHere=paths.get(step.id).filter(id=>!shown.has(id));
-        const entry=questRow(quest,key==='class'?phases[step.phase][1]:'',ctx,!chainMembers.has(step.id));
+        let badge=null;
+        if(step.phase==='before' && step.inChain)badge=sharing(step.id,deps(quest).length?'chain':'starter');
+        else if(!step.inChain)badge=sharing(step.id);
+        const entry=questRow(quest,common[step.id]?'':character+' quest',ctx,badge);
         if(neededHere.length) {
           const details=node('details','dq-prerequisites');
           const required=node('ol','dq-chain');
@@ -295,7 +310,7 @@
             shown.add(id);
             const role=keepActive.has(id)?'Keep in your quest log':
               alternatives.has(id)?'Alternate prerequisite':'Complete first';
-            required.append(questRow(quests[id],role,ctx,false));
+            required.append(questRow(quests[id],role,ctx,null));
           }
           details.append(required);entry.querySelector('.dq-quest-info').append(details);
           if(required.querySelector('.dq-match'))details.open=true;
@@ -305,13 +320,13 @@
       section.append(entries);host.append(section);
     }
     if(!objectives.length && !coverage)host.append(node('p','ref-empty','No quests listed for this checklist.'));
-    section('before');
+    section('personal');
+    section('shareable');
     section('inside');
     const navigation=window.WYHDungeonNavigation?.render(run,quests,{faction,objectives:Object.values(phaseGroups).flat()});
     if(navigation)host.append(navigation);
     section('followup');
     section('check');
-    section('class');
     if(!character && (run[faction]||[]).some(step=>context.factionCatalogue[step.id] && !common[step.id])) {
       const hint=node('p','dq-class-hint', context.hasRoster?'Choose a character to include their class quests.':'Add a character in Setup to see their class quests.');
       if(!context.hasRoster) {

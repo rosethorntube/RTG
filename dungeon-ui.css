@@ -18,12 +18,15 @@
 .dq-sources { display:inline-block; margin-top:.35rem; color:var(--r-muted); font-size:.85rem; text-underline-offset:2px; }
 .dq-group { margin:.95rem 0 1.4rem; }
 .dq-group-title { color:#f4e9d0; font:600 1.25rem/1.25 'DM Sans',sans-serif; margin:0 0 .5rem; }
+.dq-group-note { margin:-.16rem 0 .65rem; color:var(--r-muted); font-size:.86rem; line-height:1.42; }
+.dq-group[data-quest-group=personal] { padding:.85rem .9rem .1rem; border:1px solid #645333; border-left:3px solid #d8b16f; border-radius:5px; background:#252419; }
+.dq-group[data-quest-group=personal] .dq-group-title { color:#ffe0a3; }
+.dq-group[data-quest-group=personal] > .dq-direct > .dq-quest:last-child { border-bottom:0; }
 .dq-prerequisites { margin:.5rem 0 .2rem; border-left:2px solid #746341; padding:0 .55rem; background:var(--r-panel); }
 .dq-prerequisites > summary { color:#e3c78f; cursor:pointer; padding:.35rem 0; font-size:.84rem; }
 .dq-prerequisites .dq-quest:last-child { border-bottom:0; }
 .dq-class-hint { margin:.75rem 0; color:var(--r-muted); font-size:.86rem; }
 .dq-class-hint a { color:#e3c78f; }
-.dq-group[data-quest-group=class] .dq-group-title { color:#e3c78f; }
 .dq-chain,.dq-direct { list-style:none; padding:0; margin:0; }
 .dq-direct { border-top:1px solid var(--r-line); }
 .dq-quest { position:relative; display:grid; grid-template-columns:1.55rem minmax(0,1fr); column-gap:.5rem; padding:.6rem .12rem; border-bottom:1px solid var(--r-line); color:#f0ecdf; }
@@ -40,7 +43,7 @@
 .dq-complete .dq-name { text-decoration:line-through; color:#afb4a6; }
 .dq-sharing { display:inline-block; text-decoration:none; font-weight:600; font-size:.8rem; line-height:1.4; color:#c0c5b3; }
 .dq-sharing[data-sharing=true] { color:#addbb3; }
-.dq-sharing[data-sharing=false] { color:#e8c394; }
+.dq-sharing[data-sharing=false],.dq-sharing[data-sharing=chain],.dq-sharing[data-sharing=starter] { color:#f1ca89; }
 .dq-quest-meta,.dq-place,.dq-objective,.dq-relation,.dq-note,.dq-restriction { margin:.1rem 0 0; font-size:.89rem; line-height:1.46; overflow-wrap:anywhere; }
 .dq-quest-meta { font-size:.79rem; color:#c1b695; }
 .dq-place { color:#deded2; }
@@ -54,5 +57,6 @@
   .dq-quest { column-gap:.32rem; }
   .dq-group-title { font-size:1.14rem; }
   .dq-group { margin-bottom:1.05rem; }
+  .dq-group[data-quest-group=personal] { padding:.7rem .55rem .1rem; }
 }
 
