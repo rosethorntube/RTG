@@ -104,7 +104,6 @@
     const faction=window.GuideFaction;
     factionSelect.value=faction.name;
     document.body.dataset.faction=faction.name;
-    document.getElementById('faction-heading').textContent=faction.name+' roster';
     const count=window.WYHDungeonQuests?.dungeons.filter(d=>Array.isArray(d[faction.name])).length;
     const counter=document.getElementById('dcount');
     counter.parentElement.hidden=count==null;

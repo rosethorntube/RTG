@@ -159,7 +159,7 @@
     const visits=parent=>inside.has(String(parent)) || (quests[parent] && requiresInstancePickup(quests[parent],quests,inside,next));
     return list(q.requires).some(visits) || (list(q.any).length>0 && list(q.any).every(visits));
   }
-  function questRow(q,role, context) {
+  function questRow(q,role,context,showSharing=true) {
     const {tracker,marks,changes,quests}=context;
     const id=String(q.id);
     const active=context.keepActive.has(id);
@@ -173,7 +173,8 @@
     const name=q.source ? outsideLink(q.name,q.source,'dq-name') : node('span','dq-name',q.name);
     const tick=node('label','dq-check-hit');
     tick.append(check);
-    heading.append(name,sharing(id));
+    heading.append(name);
+    if(showSharing)heading.append(sharing(id));
     info.append(heading);
     const meta=[];
     if(role)meta.push(role);
@@ -250,6 +251,7 @@
       if(!items.length)continue;
       const section=node('section','dq-group');
       section.append(node('h4','dq-group-title',key==='chain'?'Quest chains':phases[key][0]));
+      if(key==='chain')section.append(node('p','dq-chain-note','Complete the prerequisites yourself.'));
       for(const group of items){
         const orderedQuests=ordered(quests,group);
         const listEl=node(key==='chain'?'ol':'ul',key==='chain'?'dq-chain':'dq-direct');
@@ -272,7 +274,7 @@
               const earlier=context.runsForQuest.get(id);
               role=earlier?.length ? 'Earlier dungeon step · '+earlier[0] : 'Complete first';
             } else role=choices.has(id)?'Alternative prerequisite':keepActive.has(id)?'Keep active in your quest log':'Optional introduction';
-            listEl.append(questRow(quest,role,ctx));
+            listEl.append(questRow(quest,role,ctx,false));
           }
           family.append(listEl);section.append(family);
         }else{
@@ -287,7 +289,7 @@
     const db=window.WYHDungeonQuests,faction=window.GuideFaction.name;
     host.classList.add('dungeon-guide');
     host.append(node('h2','ref-title','Dungeon quests'));
-    host.append(node('p','ref-context dq-intro','Choose your dungeon to see the quests to collect, the chains to finish first and the pickups inside. Party members must meet the requirements for a shared quest.'));
+    host.append(node('p','ref-context dq-intro','Choose your dungeon to see quests, prerequisites and in-dungeon pickups. Sharing the opening quest still leaves the rest of the chain to complete.'));
     if(!db){host.append(node('p','ref-empty','The dungeon catalogue could not be loaded. Reload the page to try again.'));return;}
     const runs=db.dungeons.filter(d=>Array.isArray(d[faction]));
     const quests=factionQuests(db.quests,faction),allIds=new Set(),indices=new Map(),runsForQuest=new Map();

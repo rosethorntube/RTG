@@ -4,11 +4,7 @@
   let plan=M.load(), editing=plan.order[0], dragged=null, otherOpen=false;
   let previousSetup=null;
   const expanded=new Set(['Novice']);
-  const budgetOpen={setup:true,milestones:false};
-  const costsOpen={setup:false,milestones:false};
-  const goldFormat=new Intl.NumberFormat('en-GB',{maximumFractionDigits:2});
   const node=(tag,css,text)=>{const n=document.createElement(tag);if(css)n.className=css;if(text!=null)n.textContent=text;return n;};
-  const goldLabel=value=>goldFormat.format(value)+'g';
   function button(label,css,action) {
     const b=node('button',css,label);b.type='button';b.onclick=action;return b;
   }
@@ -76,9 +72,9 @@
       redraw(false,'clear-setup');
     });
     clear.id='clear-setup';
-    clear.title=previousSetup?'Restore this roster and progress':'Reset the '+window.GuideFaction.name+' roster, gold budget, professions, milestones, dungeon checklists and LP.';
+    clear.title=previousSetup?'Restore this roster and progress':'Reset the '+window.GuideFaction.name+' roster, professions, milestones, dungeon checklists and LP.';
     const hasProgress=plan.order.length || Object.values(plan.jobs).some(jobs=>jobs.length) ||
-      Object.keys(plan.flags).length || plan.otherLP || plan.started || M.priority(plan)!==null || related.length || M.hasBudget(plan);
+      Object.keys(plan.flags).length || plan.otherLP || plan.started || M.priority(plan)!==null || related.length;
     clear.disabled=!previousSetup && !hasProgress;
     actions.append(copy,document.createTextNode(' '),clear,feedback);
     head.append(intro,actions);host.append(head);
@@ -148,134 +144,12 @@
     label.append(node('span','','LP priority'),select);
     return label;
   }
-  function amountInput(view,id,label,value,update,redraw) {
-    const input=node('input','budget-gold');
-    input.id=view+'-'+id;
-    input.type='number';
-    input.inputMode='decimal';
-    input.min='0';
-    input.step='any';
-    input.value=value??'';
-    input.setAttribute('aria-label',label);
-    input.onchange=()=>{
-      const next=input.value===''?null:input.valueAsNumber;
-      if(!input.validity.valid || !update(next)){input.value=value??'';return;}
-      redraw(true,input.id);
-    };
-    return input;
-  }
-  function budgetPanel(view,redraw) {
-    const budget=M.budget(plan);
-    const box=node('details','plan-box gold-budget');
-    box.open=budgetOpen[view];
-    box.ontoggle=()=>{if(box.isConnected)budgetOpen[view]=box.open;};
-    const summary=node('summary');
-    const status=[];
-    if(budget.gold===null)status.push('Enter your gold balance');
-    else status.push(goldLabel(budget.gold)+' available');
-    if(budget.main){
-      if(budget.mountDone) status.push(budget.main+' mount acquired');
-      else if(budget.mountCost===0) status.push(['Paladin','Warlock'].includes(budget.main)?'Free class mount at 40':'No mount gold reserved');
-      else if(budget.mountShortfall>0)status.push(goldLabel(budget.mountShortfall)+' short of your mount');
-      else status.push(goldLabel(budget.mountCost)+' mount reserve');
-    }
-    summary.append(node('b','','Gold and mount budget'),node('span','budget-summary',status.join(' · ')));
-    box.append(summary);
-    const inputs=node('div','budget-fields');
-    const funds=amountInput(view,'gold','Available gold',budget.gold,
-      value=>M.setBudgetValue(plan,'gold',value),redraw);
-    funds.placeholder='Enter amount';
-    const goldField=node('label','budget-field','Available gold (g)');
-    goldField.append(funds);
-    const altField=node('label','budget-field','Optional alt start');
-    const alt=node('select','pselect');
-    alt.id=view+'-alt-level';
-    for(const level of [30,35]){
-      const option=node('option','','Main at level '+level);
-      option.value=String(level);
-      alt.append(option);
-    }
-    alt.value=String(budget.altLevel);
-    alt.onchange=()=>{
-      if(M.setBudgetValue(plan,'altLevel',Number(alt.value)))redraw(true,alt.id);
-    };
-    altField.append(alt);
-    inputs.append(goldField,altField);
-    if(budget.main){
-      const cost=amountInput(view,'mount-cost','Level 40 mount reserve',budget.mountCost,
-        value=>M.setBudgetValue(plan,'mountCost',value),redraw);
-      const costField=node('label','budget-field','Level 40 mount reserve (g)');
-      costField.append(cost);
-      const mount=node('input');
-      mount.type='checkbox';
-      mount.id=view+'-mount-earned';
-      mount.checked=budget.mountDone;
-      mount.onchange=()=>{
-        if(M.setBudgetValue(plan,'mountDone',mount.checked))redraw(true,mount.id);
-      };
-      const mountField=node('label','budget-mount');
-      mountField.append(mount,node('span','',budget.main+' has a mount'));
-      inputs.append(costField,mountField);
-    }
-    box.append(inputs);
-    const detail=node('p','plan-note budget-copy');
-    if(budget.gold!==null && budget.main){
-      detail.append(document.createTextNode(goldLabel(budget.spendable)+' available for crafting '+(budget.mountDone?'with your mount sorted.':'after protecting the mount reserve.')+' '));
-    }
-    detail.append(document.createTextNode('Enter your current gold after essentials such as training. Planned spending is an estimate. Update the balance after you earn or spend gold.'));
-    box.append(detail);
-    const mountNote=node('p','plan-note budget-copy','Budget 100g for level-40 riding or 90g with the Honored discount. Warlocks and Paladins can use their class mount quest. ');
-    const mountSource=node('a','','Forever riding costs');
-    mountSource.href='https://www.wowhead.com/forever/news/skyborne-dont-have-reputation-discount-for-mounts-in-wow-forever-383873';
-    mountSource.target='_blank';
-    mountSource.rel='noopener';
-    mountNote.append(mountSource);
-    box.append(mountNote);
-    const estimates=node('details','budget-estimates');
-    estimates.open=costsOpen[view];
-    estimates.ontoggle=()=>{if(estimates.isConnected)costsOpen[view]=estimates.open;};
-    const costSummary=budget.starterCount
-      ? budget.starterCount+' remaining to 150 · '+goldLabel(budget.starterCost)+' estimated'
-      : 'Remaining crafting costs';
-    const craftNote=node('p','plan-note budget-copy',
-      'Allow 5g per craft through 150 and adjust for your banked materials. Use herbs for Alchemy, ore and stone for either Engineering or Blacksmithing, skins for Leatherworking, cloth for Tailoring and saved greens for Enchanting. ');
-    const materialLists=node('a','','See profession material lists');
-    materialLists.href='#professions';
-    craftNote.append(materialLists);
-    estimates.append(node('summary','',costSummary),craftNote,node('p','plan-note budget-copy',
-      'For 225 and 300, enter the extra cost from the previous tier or leave the field blank until priced.'));
-    const grid=tableFrame([['Craft'],...M.ranks.map(rank=>[String(rank)])]);
-    grid.table.classList.add('budget-cost-table');
-    for(const craft of M.crafts){
-      const row=grid.body.insertRow();
-      const name=node('th','',craft);
-      name.scope='row';
-      row.append(name);
-      for(const rank of M.ranks){
-        const input=amountInput(view,'cost-'+craft+'-'+rank,craft+' to '+rank+' cost in gold',M.craftCost(plan,craft,rank),
-          value=>M.setBudgetValue(plan,'cost',value,craft,rank),redraw);
-        input.placeholder='—';
-        row.insertCell().append(input);
-      }
-    }
-    estimates.append(grid.table);
-    box.append(estimates);
-    return box;
-  }
-  function priceNote(step) {
-    if(step.funding==='unpriced') return 'Needs an estimate';
-    if(step.funding==='prerequisite') return 'Earlier tier needs funding';
-    if(step.cost>0) return goldLabel(step.cost)+(step.funding==='short'?' · awaiting gold':'');
-    if(step.funding==='short') return 'Awaiting gold';
-    return '';
-  }
   function suggestedOrder(host,redraw) {
     const region=node('section','plan-box milestone-order');region.id='suggested-milestone-order';
     region.setAttribute('aria-labelledby','order-heading');
     const heading=node('h3','','Suggested Milestones Order');heading.id='order-heading';
     const head=node('div','order-heading');head.append(heading,priorityControl('setup',redraw));
     region.append(head);host.append(region);
-    region.append(budgetPanel('setup',redraw));
     if(!plan.order.length) {
       region.append(node('p','plan-note','Select a class above to see its route to level 60.'));return;
     }
@@ -286,17 +160,23 @@
         region.append(node('p','order-limit','Record another '+(route.target-route.startLP)+' LP from other challenges or expand your roster to reach '+route.target+'.'));
       return;
     }
-    region.append(node('p','plan-note','Build gold on your main first, then fit affordable profession milestones around levelling. Tick completed steps on Milestones to keep the route current.'));
-    const forecast=['Projected with the entered budget: '+route.fundedLP+' LP'];
-    if(route.projectedLP>route.fundedLP) forecast.push(route.projectedLP+' LP once deferred steps are funded');
-    if(route.spend>0) forecast.push(goldLabel(route.spend)+' in planned crafting');
-    region.append(node('p','order-forecast',forecast.join(' · ')));
-    if(route.target && !route.reachedGoal){
-      const message=route.projectedLP<route.target
-        ? 'Add classes, crafts or other Legacy challenges to reach '+route.target+' LP.'
-        : 'Recheck your cash and material costs before planning the rest of the '+route.target+' LP target.';
-      region.append(node('p','order-limit',message));
+    const main=plan.order[0],mounted=plan.flags[M.levelKey(main,40)];
+    const advice=[];
+    if(!mounted) {
+      advice.push('Level '+main+' to 40 and get your mount. Gather and sell materials as you level to help pay for riding.');
     }
+    if(route.target && route.startLP<route.target) {
+      if(route.first60) {
+        advice.push('Work towards '+route.target+' LP as you level the rest of your roster.');
+      } else if(route.reachedGoal) {
+        advice.push((mounted?'Work':'Once mounted, work')+' towards '+route.target+' LP, then take '+main+' to 60.');
+      } else {
+        advice.push('This route projects '+route.projectedPre60LP+' LP before '+main+' reaches 60. Work towards the remaining points after that.');
+      }
+    } else if(!route.first60)advice.push((mounted?'Take':'Once mounted, take')+' '+main+' to 60, then level the rest of your roster.');
+    if(advice.length)region.append(node('p','plan-note',advice.join(' ')));
+    if(route.target && route.projectedLP<route.target)
+      region.append(node('p','order-limit','This route projects '+route.projectedLP+' LP in total. Other Legacy Challenges can help you reach '+route.target+' LP.'));
     let number=1;
     for(const [index,phase] of route.phases.entries()) {
       const details=node('details','order-phase');
@@ -308,9 +188,7 @@
       for(const [i,item] of phase.steps.entries()) {
         const li=node('li','order-step');li.dataset.key=item.key;
         li.append(node('span','',item.title));
-        const estimate=priceNote(item);
-        if(estimate)li.append(node('span','order-price',estimate));
-        if(item.lp>0)li.append(rewardBadge('+'+item.lp+' LP'+(item.funding?' if funded':' · '+item.total+' total')));
+        if(item.lp>0)li.append(rewardBadge('+'+item.lp+' LP · '+item.total+' total'));
         (i<6?list:tail).append(li);number++;
       }
       details.append(summary,list);
@@ -383,8 +261,7 @@
     host.append(node('p','plan-note','This is a faction planning total. Each account-wide reward counts once in game, even if you tick it on both boards.'));
   }
   function showStep(key) {
-    const id=key.startsWith('mount/')?'milestones-mount-earned':key;
-    const c=document.getElementById(id),box=c?.closest('details');
+    const c=document.getElementById(key),box=c?.closest('details');
     if(box)box.open=true;
     c?.focus({preventScroll:true});c?.scrollIntoView({block:'center',behavior:'smooth'});
   }
@@ -396,29 +273,12 @@
     if(!M.available(plan)) {
       host.append(node('p','plan-lead','Choose a class in Setup to open your milestone board.'),button('Set up my roster','cta',()=>go('setup')));return;
     }
-    const next=M.suggestion(plan), budget=M.budget(plan);
+    const next=M.suggestion(plan);
     if(next){
       const callout=node('section','next-tip'),copy=node('div');
       copy.append(node('small','','Suggested next'),node('h3','',next.title),node('p','',next.why));
-      const estimate=priceNote(next);
-      if(estimate)copy.append(node('p','next-price',estimate+' estimated'));
       callout.append(copy,button('Show on board ↓','plan-alt',()=>showStep(next.key)));host.append(callout);
-      if(next.alternative){
-        const alt=next.alternative;
-        const section=node('div','plan-alternative');
-        section.append(node('b','','Also worth considering'),node('span','',alt.title+'. '+alt.why),
-          button('Show alternative','plan-alt',()=>showStep(alt.key)));host.append(section);
-      }
-    }else if(M.milestoneOrder(plan).phases.length || (budget.main && !budget.mountDone)) {
-      const callout=node('div','next-tip');
-      const prompt=budget.main && !budget.mountDone && budget.mountCost>0
-        ? 'Update your gold balance to check the mount budget.'
-        : 'Price and fund your next craft, then update your budget.';
-      callout.append(node('p','',prompt),
-        button('Update budget','plan-alt',()=>showStep('milestones-gold')));
-      host.append(callout);
     }else if(summary.max===summary.done)host.append(node('p','next-tip','All planned Legacy Points earned.'));
-    host.append(budgetPanel('milestones',redraw));
     const grid=node('div','board-grid'), lv=node('section','plan-box'),pro=node('section','plan-box'),dun=node('section','plan-box');
     host.append(grid);grid.append(lv,pro,dun);lv.append(node('h3','','Character levels'));
     const levelTable=tableFrame([['Class'],...M.levels.map(n=>[String(n),M.descriptions[n]])]);
@@ -430,7 +290,7 @@
         cell.title=label;rewardCell(cell,M.levelKey(c,n),label,redraw);
       }
     }
-    lv.append(levelTable.table,node('p','plan-note','5 · Rest in an inn. 10 / 20 / 35 · Profession training. 30 / 35 · Alt planning. 40 · Mount. 25 / 45 / 60 · +1 LP each.'));
+    lv.append(levelTable.table,node('p','plan-note','5 · Rest in an inn. 10 / 20 / 35 · Profession training. 40 · First mount. 25 / 45 / 60 · +1 LP each.'));
     pro.append(node('h3','','Professions'));
     const skillTable=tableFrame([['Class / profession'],...M.ranks.map(n=>[String(n)])]);
     for(const c of plan.order){

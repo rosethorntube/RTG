@@ -21,6 +21,7 @@
 .dq-sources { display:inline-block; margin-top:.35rem; color:var(--r-muted); font-size:.85rem; text-underline-offset:2px; }
 .dq-group { margin:.95rem 0 1.4rem; }
 .dq-group-title { color:#f4e9d0; font:600 1.25rem/1.25 'DM Sans',sans-serif; margin:0 0 .5rem; }
+.dq-chain-note { color:#e8c394; margin:0 0 .65rem; font-size:.88rem; }
 .dq-family { padding:.75rem .85rem .12rem; background:var(--r-panel); border:1px solid var(--r-line); border-radius:6px; margin:.35rem 0 .65rem; }
 .dq-family-title { color:#dfc18b; font:600 1.06rem/1.35 'DM Sans',sans-serif; }
 .dq-chain,.dq-direct { list-style:none; padding:0; margin:0; }
