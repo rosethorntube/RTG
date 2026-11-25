@@ -16,18 +16,10 @@
     state.vendor='all';state.profession=null;state.read='intro';
   });
   const validClass = name => ['Priest','Warrior','Druid','Hunter','Mage','Shaman','Warlock','Paladin','Rogue'].find(c=>norm(c)===norm(name)) || '';
-  function addText(dest, raw, links, highlights) {
+  function addText(dest, raw, highlights) {
     const text = s(raw);
     const ranges = [];
-    const endLinks = [];
     let cursor = 0;
-    for (const link of (links || [])) {
-      if (!link.text || !/^https?:\/\//i.test(link.url || '')) continue;
-      const idx = text.indexOf(link.text, cursor);
-      if (idx < 0) {endLinks.push(link);continue;}
-      ranges.push({idx, end:idx+link.text.length, url:link.url});
-      cursor = idx + link.text.length;
-    }
     for (const part of (highlights || [])) {
       if (!part) continue;
       const idx = text.indexOf(part);
@@ -38,18 +30,15 @@
     for(const range of ranges) {
       if(range.idx < cursor) continue;
       dest.append(document.createTextNode(text.slice(cursor,range.idx)));
-      const span = node(range.url ? 'a' : 'strong', range.url ? '' : 'ref-legacy', text.slice(range.idx,range.end));
-      if(range.url) {span.href=range.url; span.target='_blank'; span.rel='noopener noreferrer';}
-      dest.append(span);
+      dest.append(node('strong','ref-legacy',text.slice(range.idx,range.end)));
       cursor = range.end;
     }
     dest.append(document.createTextNode(text.slice(cursor)));
-    for(const link of endLinks) dest.append(' ',external(link.text,link.url));
     return dest;
   }
   function txtCell(block, r, c, dest) {
     const key = r+','+c;
-    return addText(dest,block.rows[r]?.[c],block.cellLinks?.[key],block.legacy?.[key]);
+    return addText(dest,block.rows[r]?.[c],block.legacy?.[key]);
   }
   function makeTable(block) {
     const wrap = node('div','ref-table-scroll');
@@ -77,13 +66,13 @@
         const ul=node('ul','ref-list');
         for(const it of b.items || []) {
           const li=node('li');
-          addText(li, typeof it==='string' ? it : it.text, it.links);
+          addText(li, typeof it==='string' ? it : it.text);
           ul.append(li);
         }
         parent.append(ul);
       } else if(b.text) {
         const p=node(b.type==='heading'?'h3':'p',b.type==='heading'?'ref-subhead':'ref-copy');
-        parent.append(addText(p,b.text,b.links));
+        parent.append(addText(p,b.text));
       }
     }
   }
@@ -144,6 +133,56 @@
   }
   const secondarySkills = ['Cooking','First Aid','Fishing'];
   const professionId = name => name.toLowerCase().replace(/ /g,'-');
+  const recipeKey = name => norm(name).replace(/ /g,'');
+
+  function trainingForBand(profession, rank, trainer) {
+    const steps = {
+      '1':['Learn Apprentice, then train Journeyman at skill 50 and level 10.',trainer],
+      '150':['Train Expert from skill 125 and level 20.',trainer],
+      '225':['Train Artisan from skill 200 and level 35.',trainer]
+    };
+    if(profession==='first-aid') {
+      steps['150']=['Read Expert First Aid – Under Wraps at skill 125. Buy both later bandage manuals during this trip.',trainer];
+      steps['225']=['Complete Triage at skill 225 and level 35. Return at 240, 260 and 290 for the next bandages.',trainer];
+    }
+    return steps[rank];
+  }
+
+  function routeSteps(raw, profession, data) {
+    const ol=node('ol','ref-craft-steps');
+    const alliance=window.GuideFaction.alliance;
+    for(const segment of raw.split(/\s*→\s*/)) {
+      const task=segment.trim();
+      if(!task)continue;
+      const item=node('li','ref-craft-step');
+      const parts=task.match(/^(.+?)\s+(?:to\s+)?(\d+)\*?(?:\.\s*(.*))?$/);
+      const recipe=parts && data?.recipes[recipeKey(parts[1])];
+      if(!recipe) {
+        item.append(node('strong','',task));
+        ol.append(item);
+        continue;
+      }
+      const [name,materials,source]=recipe;
+      const titleRow=node('div','ref-craft-title');
+      const target=profession==='leatherworking' && name==='Nightscape Headband' ? 210 : Number(parts[2]);
+      titleRow.append(node('strong','',name),node('span','ref-craft-target','To '+target));
+      item.append(titleRow);
+      if(materials)item.append(node('p','ref-craft-materials','Per craft · '+materials));
+      const where=alliance ? source.alliance || source.where : source.where;
+      const acquisition={
+        starter:['Starter recipe','Learned with the profession.'],
+        ability:['Profession ability','Disenchant unwanted green items.'],
+        trainer:['Trainer','Learn from a profession trainer.']
+      };
+      const [label,detail]=acquisition[source.kind] || [source.kind,where];
+      const caption=node('p','ref-craft-source');
+      caption.append(node('strong','',label+(source.skill ? ' · Skill '+source.skill : '')),document.createTextNode(detail ? ' · '+detail : ''));
+      if(profession==='leatherworking' && name==='Nightscape Headband')caption.append(' Keep crafting this until Nightscape Pants unlocks at 210.');
+      item.append(caption);
+      ol.append(item);
+    }
+    return ol;
+  }
 
   function renderProfession(area,guide,active) {
     const gatheringName=Object.keys(window.WYHGathering).find(name=>professionId(name)===active);
@@ -155,7 +194,7 @@
     }
     const sec=section(guide,active);
     if(!sec) return;
-      if(active==='vendors') {
+    if(active==='vendors') {
         const block=table(sec), rows=entries(block);
         const options=[['all','All locations'],...rows.map(r=>[String(r.i),r.cells[0]])];
         const out=node('div','ref-results'); const select=field('Location',options,state.vendor,val=>{state.vendor=val;show();});
@@ -169,25 +208,40 @@
           blocks(out,sec.blocks.filter(b=>b!==block));
         }
         show(); return;
-      }
-      if(['profession-ranks','fishing','cooking'].includes(active)) {
+    }
+    if(['profession-ranks','fishing','cooking'].includes(active)) {
         blocks(area,sec.blocks);
         if(active==='cooking'||active==='fishing') {
           const link=node('a','ref-link','Open Fishing & Cooking');link.href='#fishing';area.append(link);
         }
         return;
-      }
-      for(const b of sec.blocks) {
-        if(b.type!=='table') {blocks(area,[b]); continue;}
-        for(const row of entries(b)) {
-          area.append(disclosure('Skill '+row.cells[0],'',body=>{
-            body.append(node('h4','ref-label','Materials to gather'),txtCell(b,row.i,1,node('p','ref-copy')),node('h4','ref-label','Crafting order'));
-            const ol=node('ol','ref-steps');
-            for(const task of s(row.cells[2]).split(/\s*→\s*/)) if(task.trim()) ol.append(node('li','',task.trim()));
-            body.append(ol);
-          },row.i===1));
+    }
+    const data=window.WYHProfessionRecipes?.[active];
+    const trainers=data?.trainers[window.GuideFaction.name];
+    const route=table(sec);
+    for(const row of entries(route)) {
+      const rank=s(row.cells[0]).match(/^\d+/)?.[0];
+      const trainer=trainers?.[row.i-1];
+      area.append(disclosure('Skill '+s(row.cells[0]).replace(/\s+LATER$/,''),
+        row.i===3 && active==='blacksmithing'?'Plan purchases first':'',body=>{
+        const training=trainer && trainingForBand(active,rank,trainer);
+        if(training) {
+          const stop=node('div','ref-craft-training');
+          stop.append(node('h4','ref-label','Training stop'),node('p','ref-copy',training[0]),node('p','ref-craft-source',training[1]));
+          body.append(stop);
         }
-      }
+        if(row.i===3 && active==='blacksmithing') {
+          body.append(node('p','ref-copy','Check the plans before buying materials. Some are costly or require a faction reputation.'));
+        }
+        const materials=node('div','ref-craft-materials-list');
+        materials.append(node('h4','ref-label','Materials to gather'));
+        materials.append(txtCell(route,row.i,1,node('p','ref-copy')));
+        body.append(materials,node('h4','ref-label','Crafting order'),
+          routeSteps(s(row.cells[2]),active,data));
+      },row.i===1));
+    }
+    const notes=sec.blocks.filter(b=>b!==route);
+    if(notes.length)area.append(disclosure('Route notes','',body=>blocks(body,notes)));
   }
   function professions(host,guide,character) {
     title(host,character ? character+' professions' : 'Professions');
@@ -273,10 +327,11 @@
     return ['kelsey','gikkix','kilxx'].includes(rec.seller)?sellers[rec.seller]:undefined;
   }
   const bayCatch = new Set(['Raw Rockscale Cod','Raw Spotted Yellowtail','Firefin Snapper','Oily Blackmouth']);
-  function external(text, url) {
-    const link=node('a','',text);
-    link.href=url; link.target='_blank'; link.rel='noopener noreferrer';
-    return link;
+  function sellerDescription(recipe) {
+    const seller=recipeSeller(recipe);
+    if(!seller)return 'Check the Auction House for the recipe.';
+    const [vendor,where]=seller;
+    return vendor+' · '+recipe.price+' base vendor price. '+where;
   }
   function fishLookup(area) {
     const card=node('div','ref-lookup'), tools=node('div','ref-tools');
@@ -303,7 +358,7 @@
         });
         links.append(button);
       }
-      body.append(links,external('Booty Bay fishing log','https://foreverdroprate.com/fishing/234'));
+      body.append(links);
     }));
     select.addEventListener('change',()=>{lookup.fish=select.value;show();});
     skill.addEventListener('input',()=>{lookup.skill=skill.value;show();});
@@ -340,7 +395,6 @@
       if(rec.alchemy){
         line('Cooking','No Cooking skill-up. Bank these fish for your Alchemist.');
         line('Alchemy',rec.alchemy+' Learn the recipe from an Alchemy trainer.');
-        line('Source',external('Alchemy oils','https://urgametips.com/wow-forever/professions/alchemy/oils/'));
         result.append(details);return;
       }
       const value=Number(skill.value), [min,yellow,green,grey]=rec.levels;
@@ -358,21 +412,9 @@
       }
       line('Skill-up',status);
       line('Cook','1 '+rec.fish+(rec.extra?' + 1 '+rec.extra:'')+' at '+(rec.station || 'a cooking fire')+'.');
-      const seller=recipeSeller(rec);
-      const [vendor,where,vendorSource]=seller || [];
-      const sellerInfo=node('span');
-      if(seller)sellerInfo.append(node('strong','',vendor),' · '+rec.price+' base vendor price. '+where);
-      else sellerInfo.textContent='See the recipe item for Alliance vendors.';
-      if(rec.auctionRecipe) sellerInfo.append(' Check the Auction House before travelling.');
-      line('Buy recipe',sellerInfo);
+      line('Buy recipe',sellerDescription(rec)+(recipeSeller(rec) && rec.auctionRecipe?' Check the Auction House before travelling.':''));
       if(rec.buff)line('Food effect',rec.buff);
       line('Skill thresholds','Orange '+min+' · Yellow '+yellow+' · Green '+green+' · Grey '+grey);
-      const links=node('span');
-      links.append(external('Cooking recipes','https://wow-forever.gg/professions/cooking/'));
-      if(rec.source)links.append(' · ',external('Food details',rec.source));
-      if(rec.auctionRecipe)links.append(' · ',external('Recipe item','https://www.wowhead.com/forever/item='+rec.auctionRecipe));
-      if(vendorSource)links.append(' · ',external('Vendor directions',vendorSource));
-      line('Sources',links);
       result.append(details);
     }
     filter();
@@ -406,6 +448,8 @@
         const body=node('div','ref-route-body'); body.append(node('h3','',catchNames[key][1]));
         const ing=rec.cells[1].replace('Refr. Spring. Water','Refreshing Spring Water').replace('Grtr','Greater');
         body.append(node('p','',qty+' × '+ing),node('p','ref-place',s(rec.cells[2]).replace('Grtr','Greater')));
+        const food=catches.find(item=>item.meal===catchNames[key][1]);
+        if(food)body.append(node('p','ref-craft-source','Recipe · '+sellerDescription(food)));
         const buff=s(rec.cells[3]).replace(/\bAP\b/,'attack power').replace(/\bSpell\b/,'spell damage');
         li.append(rng,body,node('span','ref-buff',buff));list.append(li);
       }
@@ -416,15 +460,28 @@
     }
     refresh(view);
   }
-  function library(host,guide) {
+  function library(host,guide,character) {
     title(host,'Guide library');
-    const all=guide.sections.filter(sec=>sec.blocks.length);
+    const all=guide.sections.filter(sec=>sec.blocks.length && sec.id!=='sleeping-bag');
+    if(window.SleepingBagRoute)all.splice(1,0,{id:'sleeping-bag',title:'Cozy Sleeping Bag'});
     if(!all.length)return;
-    const active=all.some(sec=>sec.id===state.read)?state.read:all[0].id;
+    const requested=location.hash==='#sleeping-bag'?'sleeping-bag':state.read;
+    const active=all.some(sec=>sec.id===requested)?requested:all[0].id;
     const toolbar=node('div','ref-tools'),area=node('div','ref-content');
-    toolbar.append(field('Chapter',all.map(sec=>[sec.id,sec.title]),active,v=>{state.read=v;show(v);}));
+    toolbar.append(field('Chapter',all.map(sec=>[sec.id,sec.title]),active,v=>{
+      state.read=v;
+      if(location.hash==='#sleeping-bag' && v!=='sleeping-bag')location.hash='#guide';
+      show(v);
+    }));
     host.append(toolbar,area);
-    function show(id){area.replaceChildren();blocks(area,section(guide,id).blocks);}
+    function show(id){
+      area.replaceChildren();
+      if(id==='sleeping-bag') {
+        area.append(window.SleepingBagRoute.panel(character,true));
+        return;
+      }
+      blocks(area,section(guide,id).blocks);
+    }
     show(active);
   }
   window.FieldReference = {

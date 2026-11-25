@@ -46,7 +46,6 @@
 .bag-step-title::after { top: .34rem; right: .15rem; width: .34rem; height: .34rem; }
 .bag-when { color: var(--muted); }
 .bag-instruction { margin: .5rem 0 0; }
-.bag-source { display: inline-block; margin-top: .5rem; color: var(--gold); font-size: .8rem; }
 @media (max-width:670px) {
   .bag-route { margin-bottom: 1rem; }
 }

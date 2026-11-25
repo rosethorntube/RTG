@@ -326,7 +326,6 @@
       }
       dun.append(box);
     }
-    const sources=node('a','plan-note','Legacy challenge criteria ↗');sources.href='https://www.wowhead.com/forever/guide/legacy-system-overview-rewards';sources.target='_blank';sources.rel='noopener';dun.append(sources);
   }
   window.PlannerUI={draw,get plan(){return plan;},reload(){previousSetup=null;plan=M.load();},defaultTab(){return plan.started && M.available(plan)?'milestones':'setup';}};
 })();

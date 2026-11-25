@@ -50,8 +50,8 @@ to the website. Completion marks are saved in the player's browser. See the
 associated sharing evidence for the sources of the party-sharing flags.
 
 Party sharing
-Each quest links to the record supporting its sharing label. A group member
-must still qualify for the quest, including any prerequisite turn-ins.
+The catalogue retains the source record supporting each sharing label. A group
+member must still qualify for the quest, including any prerequisite turn-ins.
 The sharing mask is 0x8. Where a source omitted the field, a separate
 Forever record with an explicit value was required.
 
@@ -65,8 +65,8 @@ https://creativecommons.org/licenses/by/4.0/
 Meaning of the sharing bit
 https://github.com/cmangos/issues/wiki/Quest_template#questflags
 
-Additional yes/no checks use the individual Forever quest records linked in
-the guide, including Wowhead, Zephras, Efficient Gaming, SenseOS, 60.tools
+Additional yes/no checks use individual Forever quest records, including
+Wowhead, Zephras, Efficient Gaming, SenseOS, 60.tools
 and ForeverChanges. These are source-recorded flags and are not a log of
 personal in-game tests. Five Ruins records have conflicting published
 values (95189, 95195, 95204, 97289 and 97292). For each, Wowhead's exact-ID

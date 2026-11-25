@@ -3,7 +3,7 @@
   const phases = {
     before: ['Pick up before entering', 'Pick up for the run'],
     inside: ['Inside the dungeon', 'Pick up inside'],
-    followup: ['Follow-ups', 'After the dungeon objective'],
+    followup: ['After the run', 'After the dungeon objective'],
     check: ['Check pickup location', 'Pickup location unlisted']
   };
   const state = new Map();
@@ -16,7 +16,7 @@
   const norm = value => String(value ?? '').toLowerCase().normalize('NFKD')
     .replace(/[\u0300-\u036f'’]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
   const list = value => Array.isArray(value) ? value : value == null || value === '' ? [] : [value];
-  const edgeTypes=['requires','any','active','optional'];
+  const edgeTypes=['requires','any','active'];
   const deps = q => edgeTypes.flatMap(key=>list(q?.[key]));
   const showName = value => list(value).join(', ');
   const searchTerms = q => norm([q.name,q.npc,q.area,q.zone,q.class,q.race].filter(Boolean).join(' '));
@@ -31,12 +31,31 @@
     }
     return quests;
   }
-  function outsideLink(label, href, css) {
-    const anchor = node('a', css, label);
-    if (/^https?:\/\//i.test(href || '')) {
-      anchor.href = href; anchor.target = '_blank'; anchor.rel = 'noopener noreferrer';
-    }
-    return anchor;
+  function classQuests(factionCatalogue,character) {
+    const selected=norm(character);
+    const eligible=new Set(Object.keys(factionCatalogue).filter(id=>{
+      const classes=list(factionCatalogue[id].class).flatMap(name=>name.split(',')).map(norm);
+      return !classes.length || classes.includes(selected);
+    }));
+    const allowed=id=>!factionCatalogue[id] || eligible.has(String(id));
+    // A class-neutral label can still belong to a chain that requires a class quest.
+    let removed;
+    do {
+      removed=false;
+      for(const id of eligible) {
+        const quest=factionCatalogue[id], alternatives=list(quest.any);
+        if([...list(quest.requires),...list(quest.active)].some(parent=>!allowed(parent)) ||
+            (alternatives.length && !alternatives.some(allowed))) {
+          eligible.delete(id);
+          removed=true;
+        }
+      }
+    } while(removed);
+    return Object.fromEntries([...eligible].map(id=>{
+      const quest={...factionCatalogue[id]};
+      for(const edge of edgeTypes)quest[edge]=list(quest[edge]).filter(allowed);
+      return [id,quest];
+    }));
   }
   function labelled(label, control) {
     const field = node('label','ref-field');
@@ -53,38 +72,20 @@
     for (const parent of deps(quests[id])) closure(quests,parent,seen);
     return seen;
   }
-  // Objectives in the same run can share an opener. Show that journey once.
-  function families(quests,roots) {
-    const groups=[];
-    for (const objective of roots) {
-      const members=closure(quests,objective.id);
-      if (!members.size) continue;
-      const group={members,roots:[objective]};
-      for(let i=groups.length-1;i>=0;--i) {
-        const earlier=groups[i];
-        if (![...earlier.members].some(id=>members.has(id))) continue;
-        for(const id of earlier.members)members.add(id);
-        group.roots.unshift(...earlier.roots);
-        groups.splice(i,1);
-      }
-      groups.push(group);
+  function routeSteps(quests,id) {
+    const visited=new Set(), ordered=[];
+    function visit(key) {
+      key=String(key);
+      if(visited.has(key) || !quests[key])return;
+      visited.add(key);
+      for(const parent of deps(quests[key]))visit(parent);
+      ordered.push(key);
     }
-    return groups;
-  }
-  function ordered(quests,group) {
-    const done=new Set(),active=new Set(),rows=[];
-    const visit = id => {
-      id=String(id);
-      if(done.has(id) || active.has(id) || !quests[id]) return;
-      active.add(id);
-      for(const prior of deps(quests[id])) visit(prior);
-      active.delete(id); done.add(id); rows.push(quests[id]);
-    };
-    group.roots.forEach(r=>visit(r.id));
-    return rows;
+    visit(id);
+    return ordered;
   }
   function archivedChecklist(guide,quests,visible) {
-    const aliases=new Map(), unmatched=new Map();
+    const aliases=new Map();
     const byTitle=new Map();
     for(const id of visible) {
       const q=quests[id], title=norm(q.name);
@@ -116,9 +117,9 @@
       if(q) {
         const id=String(q.id);
         aliases.set(id,[...(aliases.get(id)||[]),norm(original)]);
-      } else if(original) unmatched.set(norm(original),original);
+      }
     }
-    return {aliases,unmatched};
+    return aliases;
   }
   function progress(character,aliases) {
     const key=window.GuideFaction.storageKey('rosethorn.prequests.v1.'+character);
@@ -145,7 +146,7 @@
     const entry=window.WYH_QUEST_SHARING?.[id];
     const known=typeof entry?.share==='boolean';
     const text=known ? (entry.share?'Shareable':'Pick up individually') : 'Sharing unlisted';
-    const badge=known && entry.src ? outsideLink(text,entry.src,'dq-sharing') : node('span','dq-sharing',text);
+    const badge=node('span','dq-sharing',text);
     badge.dataset.sharing=known ? String(entry.share) : 'unlisted';
     badge.title=known ? (entry.share?'A party member can share this step with an eligible player.':'Each player must pick up this step independently.')
       : 'The available quest records do not establish whether this step can be shared.';
@@ -170,7 +171,7 @@
     check.setAttribute('aria-label',active?'Mark '+q.name+' in your quest log':'Mark '+q.name+' complete');
     item.classList.toggle('dq-complete',check.checked);
     const info=node('div','dq-quest-info'), heading=node('div','dq-quest-heading');
-    const name=q.source ? outsideLink(q.name,q.source,'dq-name') : node('span','dq-name',q.name);
+    const name=node('span','dq-name',q.name);
     const tick=node('label','dq-check-hit');
     tick.append(check);
     heading.append(name);
@@ -181,28 +182,50 @@
     if(q.min !== undefined && q.min !== null)meta.push('Min '+q.min);
     if(Number(q.level)>0)meta.push('Quest level '+q.level);
     if(q.start)meta.push('Start around '+q.start);
-    const sides=list(q.sides);
-    if(sides.length)meta.push(sides.includes('Both') || sides.length===2 ? 'Both factions' : sides[0]+' only');
     if(meta.length)info.append(node('p','dq-quest-meta',meta.join(' · ')));
     const area=q.area && norm(q.area)!==norm(q.zone)?showName(q.area):'';
     const coords=Number.isFinite(q.x)&&Number.isFinite(q.y)?' ('+[q.x,q.y].map(n=>Number(n.toFixed(1))).join(', ')+')':'';
-    const place=[showName(q.npc),[area,showName(q.zone)].filter(Boolean).join(', ')].filter(Boolean).join(' · ')+coords;
+    const giver=q.itemStart && q.npc?'Start from '+showName(q.npc):showName(q.npc);
+    const place=[giver,[area,showName(q.zone)].filter(Boolean).join(', ')].filter(Boolean).join(' · ')+coords;
     if(place)info.append(node('p','dq-place',place));
-    const cls=showName(q.class),race=showName(q.race);
+    if(q.objective)info.append(node('p','dq-objective',q.objective));
+    const race=showName(q.race);
     const raceRule=race.startsWith('Except ') ? 'Unavailable to '+race.slice(7) : race && race+' only';
-    const restrictions=[cls && cls+' only',raceRule].filter(Boolean);
+    const restrictions=[raceRule].filter(Boolean);
     if(restrictions.length)info.append(node('p','dq-restriction',restrictions.join(' · ').replace(/\bForsaken\b/g,'Forsaken (Undead)')));
     let note=q.note || '';
     for(const rule of restrictions){
       if(note.toLowerCase().startsWith(rule.toLowerCase()+'.'))note=note.slice(rule.length+1).trim();
     }
     if(note)info.append(node('p','dq-note',note));
-    const names=ids=>list(ids).map(i=>quests[i]?.name || ('Quest '+i)).join(' / ');
-    if(list(q.requires).length>1)info.append(node('p','dq-relation','Complete all of these first: '+names(q.requires)+'.'));
-    else if(list(q.requires).length && !quests[q.requires[0]])info.append(node('p','dq-relation','Complete '+names(q.requires)+' first.'));
-    if(list(q.active).length)info.append(node('p','dq-relation','Keep in your quest log: '+names(q.active)+'.'));
-    if(list(q.any).length)info.append(node('p','dq-relation','Complete one of these first: '+names(q.any)+'.'));
-    if(list(q.optional).length)info.append(node('p','dq-relation','Optional introduction: '+names(q.optional)+'.'));
+    function relation(ids,label) {
+      const parents=list(ids);
+      if(!parents.length)return;
+      const line=node('p','dq-relation',label);
+      for(const [index,parent] of parents.entries()) {
+        const prior=quests[parent];
+        if(index>0)line.append(' / ');
+        if(!prior || !/^\d+$/.test(String(parent))) {
+          line.append(prior?.name || ('Quest '+parent));
+          continue;
+        }
+        const link=node('button','dq-step-ref',prior.name);
+        link.type='button';
+        link.addEventListener('click',()=>{
+          const step=item.closest('.dq-run')?.querySelector('[data-quest-id="'+parent+'"]');
+          if(!step)return;
+          const details=step.closest('.dq-prerequisites');
+          if(details)details.open=true;
+          step.focus({preventScroll:true});
+          step.scrollIntoView({block:'center'});
+        });
+        line.append(link);
+      }
+      info.append(line);
+    }
+    relation(q.requires,'Complete first · ');
+    relation(q.active,'Keep in your quest log · ');
+    relation(q.any,'Complete one of these first · ');
     check.addEventListener('change',()=>{
       if(!tracker.set(id,check.checked,active)){
         check.checked=!check.checked;changes('Your browser could not save this change.');return;
@@ -212,16 +235,20 @@
     item.append(tick,info);return item;
   }
   function drawRun(host,run,context) {
-    const {quests,faction,tracker}=context;
-    const objectives=run[faction] || [];
-    const byID=new Map(objectives.map(r=>[String(r.id),r]));
-    const inside=new Set(objectives.filter(r=>r.phase==='inside').map(r=>String(r.id)));
-    const groups=families(quests,objectives);
-    const ids=new Set(groups.flatMap(group=>[...group.members]));
+    const {quests,faction,tracker,character,common}=context;
+    const objectives=(run[faction] || []).filter(step=>quests[step.id]);
+    const rootIds=new Set(objectives.map(step=>String(step.id)));
+    const inside=new Set(objectives.filter(step=>step.phase==='inside').map(step=>String(step.id)));
+    const paths=new Map(objectives.map(step=>[String(step.id),routeSteps(quests,step.id)]));
+    const ids=new Set([...paths.values()].flat());
     const needed=(keys)=>new Set([...ids].flatMap(id=>keys.flatMap(k=>list(quests[id][k]).map(String))));
     const keepActive=needed(['active']);
     for(const id of needed(['any','requires']))keepActive.delete(id);
-    for(const id of byID.keys())keepActive.delete(id);
+    for(const id of rootIds)keepActive.delete(id);
+    const alternatives=needed(['any']);
+    for(const id of needed(['active','requires']))alternatives.delete(id);
+    const chainMembers=needed(edgeTypes);
+    for(const [id,path] of paths)if(path.length>1 || deps(quests[id]).length)chainMembers.add(id);
     const header=node('header','dq-run-head'), heading=node('div');
     heading.append(node('h3','dq-heading',run.name));
     if(run.recommended)heading.append(node('p','dq-run-level','Recommended run level '+run.recommended));
@@ -230,83 +257,94 @@
     header.append(heading,completion);host.append(header);
     const coverage=typeof run.coverage==='string'?run.coverage:run.coverage?.[faction];
     if(coverage)host.append(node('p','dq-coverage',coverage));
-    if(!ids.size){
-      if(!coverage)host.append(node('p','ref-empty','No documented '+faction+' quest pickups for this run.'));
-      return;
+    const phaseGroups={before:[],inside:[],followup:[],check:[],class:[]};
+    for(const step of objectives) {
+      const quest=quests[step.id];
+      const phase=step.phase==='before' && requiresInstancePickup(quest,quests,inside)?'followup':phaseOf(step);
+      phaseGroups[common[step.id]?phase:'class'].push({id:String(step.id),phase});
     }
+    const phaseOrder=Object.keys(phases);
+    phaseGroups.before.sort((left,right)=>Number(!!deps(quests[left.id]).length)-Number(!!deps(quests[right.id]).length));
+    phaseGroups.class.sort((left,right)=>phaseOrder.indexOf(left.phase)-phaseOrder.indexOf(right.phase));
     function update(message) {
       if(message){completion.textContent=message;return;}
+      if(!rootIds.size)return;
       const saved=tracker.load(); let checked=0;
-      for(const id of ids)if(tracker.has(saved,id,keepActive.has(id)))checked++;
-      completion.textContent=checked+' / '+ids.size+' steps marked';
+      for(const id of rootIds)if(tracker.has(saved,id,false))checked++;
+      completion.textContent=checked+' / '+rootIds.size+' quests marked';
     }
     update();
     const ctx={...context,keepActive,marks:tracker.load(),changes:update};
-    const buckets={chain:[],before:[],inside:[],followup:[],check:[]};
-    for(const group of groups) {
-      const chain=[...group.members].some(id=>deps(quests[id]).length);
-      buckets[chain?'chain':phaseOf(group.roots[0])].push(group);
-    }
-    for(const [key,items] of Object.entries(buckets)){
-      if(!items.length)continue;
+    const shown=new Set(rootIds);
+    function section(key) {
+      const steps=phaseGroups[key];
+      if(!steps.length)return;
       const section=node('section','dq-group');
-      section.append(node('h4','dq-group-title',key==='chain'?'Quest chains':phases[key][0]));
-      if(key==='chain')section.append(node('p','dq-chain-note','Complete the prerequisites yourself.'));
-      for(const group of items){
-        const orderedQuests=ordered(quests,group);
-        const listEl=node(key==='chain'?'ol':'ul',key==='chain'?'dq-chain':'dq-direct');
-        if(key==='chain'){
-          const requiredBy=new Set(orderedQuests.flatMap(q=>list(q.requires).map(String)));
-          const choices=new Set(orderedQuests.flatMap(q=>list(q.any).map(String)));
-          const optional=new Set(orderedQuests.flatMap(q=>list(q.optional).map(String)));
-          const outcomes=group.roots.filter(r=>!requiredBy.has(String(r.id)) && !choices.has(String(r.id)) && !optional.has(String(r.id)));
-          const family=node('div','dq-family');
-          const goals=[...new Set((outcomes.length?outcomes:group.roots).map(r=>quests[r.id]?.name).filter(Boolean))];
-          const label=goals.length>2 || goals.join(' / ').length>95 ? 'From '+orderedQuests[0].name : goals.join(' / ');
-          family.append(node('h5','dq-family-title',label));
-          for(const quest of orderedQuests){
-            const id=String(quest.id),entry=byID.get(id);
-            let role;
-            if(entry){
-              role=entry.phase==='before' && requiresInstancePickup(quest,quests,inside)
-                ? 'Return to this giver after the in-dungeon step' : phases[phaseOf(entry)][1];
-            } else if(requiredBy.has(id)){
-              const earlier=context.runsForQuest.get(id);
-              role=earlier?.length ? 'Earlier dungeon step · '+earlier[0] : 'Complete first';
-            } else role=choices.has(id)?'Alternative prerequisite':keepActive.has(id)?'Keep active in your quest log':'Optional introduction';
-            listEl.append(questRow(quest,role,ctx,false));
+      section.dataset.questGroup=key;
+      const title=key==='class'?character+' quests':phases[key][0];
+      section.append(node('h4','dq-group-title',title));
+      const entries=node('ul','dq-direct');
+      for(const step of steps) {
+        const quest=quests[step.id], neededHere=paths.get(step.id).filter(id=>!shown.has(id));
+        const entry=questRow(quest,key==='class'?phases[step.phase][1]:'',ctx,!chainMembers.has(step.id));
+        if(neededHere.length) {
+          const details=node('details','dq-prerequisites');
+          const required=node('ol','dq-chain');
+          details.append(node('summary','', 'Prerequisites ('+neededHere.length+')'));
+          for(const id of neededHere) {
+            shown.add(id);
+            const role=keepActive.has(id)?'Keep in your quest log':
+              alternatives.has(id)?'Alternate prerequisite':'Complete first';
+            required.append(questRow(quests[id],role,ctx,false));
           }
-          family.append(listEl);section.append(family);
-        }else{
-          for(const quest of orderedQuests)listEl.append(questRow(quest,'',ctx));
-          section.append(listEl);
+          details.append(required);entry.querySelector('.dq-quest-info').append(details);
+          if(required.querySelector('.dq-match'))details.open=true;
         }
+        entries.append(entry);
       }
-      host.append(section);
+      section.append(entries);host.append(section);
+    }
+    if(!objectives.length && !coverage)host.append(node('p','ref-empty','No quests listed for this checklist.'));
+    section('before');
+    section('inside');
+    const navigation=window.WYHDungeonNavigation?.render(run,quests,{faction,objectives:Object.values(phaseGroups).flat()});
+    if(navigation)host.append(navigation);
+    section('followup');
+    section('check');
+    section('class');
+    if(!character && (run[faction]||[]).some(step=>context.factionCatalogue[step.id] && !common[step.id])) {
+      const hint=node('p','dq-class-hint', context.hasRoster?'Choose a character to include their class quests.':'Add a character in Setup to see their class quests.');
+      if(!context.hasRoster) {
+        const setup=node('a','','Open Setup');setup.href='#setup';
+        hint.append(' ',setup);
+      }
+      host.append(hint);
     }
   }
   function render(host,guide,character,changeCharacter) {
     const db=window.WYHDungeonQuests,faction=window.GuideFaction.name;
     host.classList.add('dungeon-guide');
     host.append(node('h2','ref-title','Dungeon quests'));
-    host.append(node('p','ref-context dq-intro','Choose your dungeon to see quests, prerequisites and in-dungeon pickups. Sharing the opening quest still leaves the rest of the chain to complete.'));
+    host.append(node('p','ref-context dq-intro','Choose a dungeon and a character to see their pickups, in-dungeon quests and follow-ups.'));
     if(!db){host.append(node('p','ref-empty','The dungeon catalogue could not be loaded. Reload the page to try again.'));return;}
     const runs=db.dungeons.filter(d=>Array.isArray(d[faction]));
-    const quests=factionQuests(db.quests,faction),allIds=new Set(),indices=new Map(),runsForQuest=new Map();
+    const factionCatalogue=factionQuests(db.quests,faction);
+    const common=classQuests(factionCatalogue,'');
+    const quests=character?classQuests(factionCatalogue,character):common;
+    const allIds=new Set(),indices=new Map();
     for(const run of runs){
       const ids=new Set();
       for(const entry of run[faction]){
         closure(quests,entry.id,ids);
-        const id=String(entry.id),others=runsForQuest.get(id)||[];
-        others.push(run.name);runsForQuest.set(id,others);
+        closure(factionCatalogue,entry.id,allIds);
       }
-      for(const id of ids)allIds.add(id);
       indices.set(run.id,[norm(run.name+' '+(run.legacy || '')),...[...ids].map(id=>searchTerms(quests[id]))]);
     }
-    const earlier=archivedChecklist(guide,quests,allIds);
-    const tracker=progress(character,earlier.aliases);
+    const tracker=progress(character,archivedChecklist(guide,factionCatalogue,allIds));
     const first=runs.find(run=>run[faction].length) || runs[0];
-    const selected=state.get(faction)||{id:first?.id,query:''};
+    const selected=state.get(faction)||{id:first?.id,query:'',character};
+    if(selected.character!==character)selected.query='';
+    selected.character=character;
     state.set(faction,selected);
     const tools=node('div','ref-tools dq-tools');
     const search=node('input','ref-search');search.type='search';search.id='dq-search';
@@ -320,7 +358,7 @@
       pick.append(option('Shared checklist',''));
       for(const member of roster)pick.append(option(member,member));
       pick.value=character || '';pick.addEventListener('change',()=>changeCharacter(pick.value));
-      tools.append(labelled('Checklist for',pick));
+      tools.append(labelled('Character checklist',pick));
     }
     const result=node('article','dq-run');
     const searchResult=node('div','dq-search-result'), count=node('span');
@@ -331,14 +369,6 @@
       if(target){target.focus({preventScroll:true});target.scrollIntoView({block:'center'});}
     });
     searchResult.append(count,jump);host.append(tools,searchResult,result);
-    const retained=[...tracker.load()].filter(mark=>earlier.unmatched.has(mark));
-    if(retained.length){
-      const history=node('details','dq-archive'), oldList=node('ul');
-      history.append(node('summary','','Earlier marked entries ('+retained.length+')'),
-        node('p','','These entries from your previous checklist could not be matched to a single quest step.'));
-      retained.forEach(mark=>oldList.append(node('li','',earlier.unmatched.get(mark))));
-      history.append(oldList);host.append(history);
-    }
     const sources=node('a','dq-sources','Dungeon data sources');
     sources.href='dungeon-data-sources.txt';sources.target='_blank';sources.rel='noopener';host.append(sources);
     function refresh(){
@@ -350,7 +380,7 @@
       choose.disabled=!run;
       if(run){selected.id=run.id;choose.value=run.id;}
       result.replaceChildren();
-      if(run)drawRun(result,run,{quests,faction,tracker,query,runsForQuest});
+      if(run)drawRun(result,run,{quests,faction,tracker,query,common,factionCatalogue,character,hasRoster:roster.length>0});
       else result.append(node('p','ref-empty','No dungeons match this search. Clear the search to see all dungeons.'));
       searchResult.hidden=!query || !filtered.length;
       count.textContent=query && filtered.length ? filtered.length+' matching '+(filtered.length===1?'dungeon':'dungeons') : '';

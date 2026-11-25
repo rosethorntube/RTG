@@ -54,6 +54,7 @@
   function currentTab() {
     const raw=location.hash.slice(1);
     if(raw==='addon')return 'advisor';
+    if(raw==='sleeping-bag')return 'guide';
     return tabs.some(([id])=>id===raw)?raw:window.PlannerUI.defaultTab();
   }
   function switchTo(id) {if(currentTab()!==id)location.hash=id;}
@@ -72,7 +73,6 @@
     const main=document.getElementById('main');
     main.focus({preventScroll:true});main.scrollIntoView({block:'start'});
   });
-  document.getElementById('foot-source').href=guide.sourceUrl;
   const navLinks=new Map();
   for(const [id,label] of tabs){
     const link=anchor('#'+id,'','tab');link.append(icon(id),el('span','',label));
@@ -134,13 +134,14 @@
     page.className='';
     const layout=el('div','dash');
     const pane=el('div','app-pane');
-    if(id==='dungeons')layout.append(window.SleepingBagRoute.panel(character));
-    else if(id==='professions'){
+    if(id==='dungeons'){
+      page.append(pane);
+    } else if(id==='professions'){
       const professionsRoster=rosterPanel(true);
       professionsRoster.classList.add('profession-roster');
       layout.append(professionsRoster);
     } else {layout.append(rosterPanel());pane.append(rosterSelect());}
-    layout.append(pane);page.append(layout);
+    if(id!=='dungeons'){layout.append(pane);page.append(layout);}
     const content=el('div');pane.append(content);
     window.FieldReference.render(content,id,faction.alliance?window.ALLIANCE_GUIDE:guide,character,changeCharacter);
   }

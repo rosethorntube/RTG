@@ -1,7 +1,6 @@
 (() => {
   'use strict';
 
-  const source = 'https://www.wowhead.com/forever/guide/cozy-sleeping-bag-locations-rewards';
   const barrens = 'the Burned-Out Remains by the ruined tower south of Camp Taurajo (46.4, 73.9)';
   const westfall = 'the Burned-Out Remains beside the wrecked cart at Alexston Farmstead (37.4, 50.6)';
 
@@ -49,7 +48,7 @@
     const aside=node('aside','bag-route');
     aside.setAttribute('aria-label','Cozy Sleeping Bag route');
     const box=node('details','bag-panel');
-    box.open=!(window.matchMedia && window.matchMedia('(max-width: 670px)').matches);
+    box.open=true;
     const top=node('summary','bag-summary');
     const title=node('h2','','Cozy Sleeping Bag');
     const status=node('span','bag-status');
@@ -98,11 +97,7 @@
     const next=inputs.findIndex(check=>!check.checked);
     if(next>=0)directionsByStop[next].open=true;
     refresh();
-    const link=node('a','bag-source','Quest details and maps ↗');
-    link.href=source;
-    link.target='_blank';
-    link.rel='noopener noreferrer';
-    body.append(list,link);
+    body.append(list);
     box.append(top,body);
     aside.append(box);
     return aside;

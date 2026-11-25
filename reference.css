@@ -34,6 +34,17 @@
 .field-reference .ref-table tbody tr:nth-child(2n) { background: #1b201c; }
 .field-reference .ref-copy { white-space: pre-line; overflow-wrap: anywhere; }
 .field-reference .ref-label { margin: 0 0 .45rem; color: var(--r-warm); }
+.field-reference .ref-craft-training { padding: .65rem .8rem; margin-bottom: .9rem; border: 1px solid #4c4636; border-radius: 5px; background: #29271f; }
+.field-reference .ref-craft-training p { margin: .14rem 0; }
+.field-reference .ref-craft-materials-list { padding-bottom: .35rem; margin-bottom: .75rem; border-bottom: 1px solid var(--r-line); }
+.field-reference .ref-craft-steps { margin: 0; padding-left: 1.5rem; }
+.field-reference .ref-craft-step { padding: .5rem .1rem; border-bottom: 1px solid var(--r-line); }
+.field-reference .ref-craft-step:last-child { border-bottom: 0; }
+.field-reference .ref-craft-title { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: .2rem .7rem; }
+.field-reference .ref-craft-target { color: var(--r-warm); font-size: .82rem; white-space: nowrap; }
+.field-reference .ref-craft-step p { margin: .15rem 0; }
+.field-reference .ref-craft-materials,.field-reference .ref-craft-source { color: var(--r-muted); font-size: .88rem; line-height: 1.46; overflow-wrap: anywhere; }
+.field-reference .ref-craft-source strong { color: #e0be86; font-weight: 550; }
 .field-reference .ref-steps { margin: .3rem 0; padding-left: 1.65rem; }
 .field-reference .ref-steps li { padding: .12rem 0 .12rem .15rem; line-height: 1.5; }
 .field-reference a { color: #e1c08d; text-underline-offset: 3px; }
