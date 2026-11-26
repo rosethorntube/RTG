@@ -7,6 +7,7 @@
     check: 'Check pickup location'
   };
   const state = new Map();
+  const xpFormat = new Intl.NumberFormat('en-GB');
   const node = (tag, css, text) => {
     const el = document.createElement(tag);
     if (css) el.className = css;
@@ -178,9 +179,13 @@
     item.classList.toggle('dq-complete',check.checked);
     const info=node('div','dq-quest-info'), heading=node('div','dq-quest-heading');
     const name=node('span','dq-name',q.name);
+    const xp=window.DUNGEON_QUEST_XP?.[id];
+    const hasXP=Number.isInteger(xp) && xp>=0;
+    const questTitle=node('div','dq-quest-title');
+    questTitle.append(name,node('span','dq-xp',hasXP?xpFormat.format(xp)+' XP':'XP unavailable'));
     const tick=node('label','dq-check-hit');
     tick.append(check);
-    heading.append(name);
+    heading.append(questTitle);
     if(sharingBadge)heading.append(sharingBadge);
     info.append(heading);
     const meta=[];
@@ -341,6 +346,7 @@
     host.classList.add('dungeon-guide');
     host.append(node('h2','ref-title','Dungeon quests'));
     host.append(node('p','ref-context dq-intro','Choose a dungeon and a character to see their pickups, in-dungeon quests and follow-ups.'));
+    host.append(node('p','dq-xp-note','Note: Full XP rewards are granted up to five levels above the quest\u2019s listed level. At six levels above, the reward starts dropping.'));
     if(!db){host.append(node('p','ref-empty','The dungeon catalogue could not be loaded. Reload the page to try again.'));return;}
     const runs=db.dungeons.filter(d=>Array.isArray(d[faction]));
     const factionCatalogue=factionQuests(db.quests,faction);

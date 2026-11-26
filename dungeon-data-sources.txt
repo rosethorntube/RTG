@@ -49,6 +49,18 @@ and quest names belong to Blizzard Entertainment. No live client is connected
 to the website. Completion marks are saved in the player's browser. See the
 associated sharing evidence for the sources of the party-sharing flags.
 
+Experience rewards
+Quest rows show the full WoW Forever XP reward before overlevel penalties and
+player bonuses. Rewards were matched by quest ID using Forever Tool and
+Zephras's Forever quest cache. Cache values use the game's XP rounding,
+cross-checked against individual Wowhead Forever and ForeverDB quest records.
+https://forever-tool.com/en/quests/
+https://zephras.com/forever/enUS/experience/
+https://www.wowhead.com/forever/experience-calculator
+https://www.foreverdb.app/en/forever/quests
+https://foreverdb.net/quest/378-the-fury-runs-deep
+https://foreverdb.net/quest/3801-dark-iron-legacy
+
 Party sharing
 The catalogue retains the source record supporting each sharing label. A group
 member must still qualify for the quest, including any prerequisite turn-ins.

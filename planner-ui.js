@@ -124,12 +124,11 @@
     const next=button('Open my milestones →','cta',()=>{plan.started=true;M.save(plan);go('milestones');});
     next.disabled=!M.available(plan); sidebar.append(next);
     sidebar.append(node('p','plan-note','Your choices and ticks are saved in this browser.'));
-    suggestedOrder(host,redraw);
   }
-  function priorityControl(view,redraw) {
+  function priorityControl(redraw) {
     const label=node('label','order-priority');
     const select=node('select','pselect');
-    select.id=view+'-lp-priority';
+    select.id='milestones-lp-priority';
     const active=M.priority(plan);
     const options=[null,5,10,16];
     if(active!==null && !options.includes(active))options.push(active);
@@ -144,15 +143,12 @@
     label.append(node('span','','LP priority'),select);
     return label;
   }
-  function suggestedOrder(host,redraw) {
+  function suggestedOrder(host) {
     const region=node('section','plan-box milestone-order');region.id='suggested-milestone-order';
+    region.tabIndex=-1;
     region.setAttribute('aria-labelledby','order-heading');
     const heading=node('h3','','Suggested Milestones Order');heading.id='order-heading';
-    const head=node('div','order-heading');head.append(heading,priorityControl('setup',redraw));
-    region.append(head);host.append(region);
-    if(!plan.order.length) {
-      region.append(node('p','plan-note','Select a class above to see its route to level 60.'));return;
-    }
+    region.append(heading);host.append(region);
     const route=M.milestoneOrder(plan);
     if(!route.phases.length) {
       region.append(node('p','plan-note','All selected classes are at level 60 and every selected profession is at 300.'));
@@ -234,7 +230,7 @@
     caption.append(node('b','',window.GuideFaction.name+' roster LP'),node('small','','Selected classes and this roster’s recorded challenges'));
     main.append(num,caption);
     const target=M.priority(plan), goal=node('div','lp-goal');
-    goal.append(priorityControl('milestones',redraw));
+    goal.append(priorityControl(redraw));
     if(target>0){
       const bar=node('progress');bar.max=target;bar.value=Math.min(summary.earned,target);
       bar.setAttribute('aria-label','Progress towards '+target+' Legacy Points');
@@ -277,7 +273,16 @@
     if(next){
       const callout=node('section','next-tip'),copy=node('div');
       copy.append(node('small','','Suggested next'),node('h3','',next.title),node('p','',next.why));
-      callout.append(copy,button('Show on board ↓','plan-alt',()=>showStep(next.key)));host.append(callout);
+      const actions=node('div','next-tip-actions');
+      actions.append(
+        button('Show on board ↓','plan-alt',()=>showStep(next.key)),
+        button('View full order ↓','plan-alt',()=>{
+          const order=document.getElementById('suggested-milestone-order');
+          order.focus({preventScroll:true});
+          order.scrollIntoView({block:'start'});
+        })
+      );
+      callout.append(copy,actions);host.append(callout);
     }else if(summary.max===summary.done)host.append(node('p','next-tip','All planned Legacy Points earned.'));
     const grid=node('div','board-grid'), lv=node('section','plan-box'),pro=node('section','plan-box'),dun=node('section','plan-box');
     host.append(grid);grid.append(lv,pro,dun);lv.append(node('h3','','Character levels'));
@@ -326,6 +331,7 @@
       }
       dun.append(box);
     }
+    suggestedOrder(host);
   }
   window.PlannerUI={draw,get plan(){return plan;},reload(){previousSetup=null;plan=M.load();},defaultTab(){return plan.started && M.available(plan)?'milestones':'setup';}};
 })();

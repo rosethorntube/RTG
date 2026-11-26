@@ -1,6 +1,7 @@
 .dungeon-guide { min-width:0; }
 .dungeon-guide .ref-title { margin-bottom:.4rem; }
-.dungeon-guide .dq-intro { max-width:75ch; margin-bottom:1.15rem; }
+.dungeon-guide .dq-intro { max-width:75ch; margin-bottom:.55rem; }
+.dq-xp-note { max-width:75ch; margin:0 0 1.15rem; color:#dcc494; font-size:.88rem; line-height:1.45; }
 .dq-tools .ref-field { flex:1 1 11rem; min-width:0; }
 .dq-tools .dq-run-select { flex:2 1 17rem; }
 .dq-tools select { text-overflow:ellipsis; }
@@ -39,6 +40,8 @@
 .dq-chain .dq-quest:not(:last-child) .dq-check-hit::after { content:''; width:1px; background:#4b5145; position:absolute; top:1.55rem; bottom:-.70rem; left:50%; }
 .dq-quest-info { min-width:0; }
 .dq-quest-heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:.12rem .75rem; }
+.dq-quest-title { display:flex; flex-wrap:wrap; align-items:baseline; min-width:0; gap:.12rem .6rem; }
+.dq-xp { color:#e3c78f; font-size:.8rem; font-weight:600; white-space:nowrap; }
 .dq-name { font-weight:650; color:#f1e9d6; overflow-wrap:anywhere; text-decoration:none; }
 .dq-complete .dq-name { text-decoration:line-through; color:#afb4a6; }
 .dq-sharing { display:inline-block; text-decoration:none; font-weight:600; font-size:.8rem; line-height:1.4; color:#c0c5b3; }

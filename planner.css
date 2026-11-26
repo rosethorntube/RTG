@@ -45,8 +45,7 @@
 }
 
 .milestone-order { margin-top: 1.3rem; }
-.order-heading { display: flex; align-items: center; justify-content: space-between; gap: .6rem 1.3rem; flex-wrap: wrap; }
-.order-heading h3 { margin: 0; }
+.next-tip-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
 .order-priority { display: inline-flex; align-items: center; gap: .6rem; color: var(--muted); font-size: .88rem; }
 .order-priority select { width: auto; max-width: 100%; }
 .order-phase { border-top: 1px solid var(--line); }
