@@ -8,8 +8,9 @@
   const classes = Object.keys(preset);
   const crafts = ['Alchemy','Blacksmithing','Enchanting','Engineering','Leatherworking','Tailoring'];
   const professions = [...crafts,'Herbalism','Mining','Skinning'].sort();
-  const levels = [5,10,20,25,30,35,40,45,60];
-  const descriptions = {5:'Rest in an inn between sessions',10:'Journeyman training',20:'Expert training',25:'+1 LP',30:'Character level',35:'Artisan training',40:'First mount for your main',45:'+1 LP',60:'+1 LP'};
+  const levels = [10,20,25,35,45,60];
+  const recordedLevels = [...levels,5,30,40];
+  const descriptions = {10:'Journeyman training',20:'Expert training',25:'+1 LP',35:'Artisan training',45:'+1 LP',60:'+1 LP'};
   const ranks = [150,225,300], gates = [10,20,35], lpLevels = [25,45,60];
   // The number beside each dungeon is the original guide's suggested run level.
   const hordeGroups = [
@@ -50,10 +51,8 @@
       if(stored.flags && typeof stored.flags==='object') p.flags=Object.fromEntries(Object.entries(stored.flags).filter(([,v])=>v===true));
       for(const c of classes) {
         const legacyMount='mount/'+c;
-        if(p.flags[legacyMount] || stored.budget?.mounts?.[c]?.done===true)mark(p,levelKey(c,40),true);
+        if(p.flags[legacyMount] || stored.budget?.mounts?.[c]?.done===true)p.flags[levelKey(c,40)]=true;
         delete p.flags[legacyMount];
-        const highest=level(p,c);
-        if(highest>=5)mark(p,levelKey(c,highest),true);
       }
       p.started = stored.started===true;
       setOtherLP(p, stored.otherLP ?? 0);
@@ -64,14 +63,19 @@
       const legacy=read(window.GuideFaction.storageKey('rosethorn.fieldguide.v1.complete'));
       if(Array.isArray(legacy) && legacy.length) {
         copyPreset(p);
-        for(const c of classes) for(const n of levels) {
-          if(legacy.includes(c.toLowerCase()+'-'+n)) mark(p,levelKey(c,n),true);
+        for(const c of classes) for(const n of recordedLevels) {
+          if(legacy.includes(c.toLowerCase()+'-'+n)) p.flags[levelKey(c,n)]=true;
         }
         for(const [group,runs] of groups()) {
           const old=(group==='Master'?'expert':group.toLowerCase())+'-spelunker';
           if(legacy.includes(old)) for(const [name] of runs) p.flags[dungeonKey(name)]=true;
         }
       }
+    }
+    for(const c of classes) {
+      const highest=level(p,c);
+      const milestone=levels.filter(n=>n<=highest).at(-1);
+      if(milestone)mark(p,levelKey(c,milestone),true);
     }
     return p;
   }
@@ -85,12 +89,15 @@
   function mark(p,key,done) {
     const pieces=key.split('/'), value=Number(pieces.at(-1)), prefix=pieces.slice(0,-1).join('/')+'/';
     let keys=[key];
-    if(pieces[0]==='level' && levels.includes(value)) keys=levels.filter(n=>done?n<=value:n>=value).map(n=>prefix+n);
+    if(pieces[0]==='level' && levels.includes(value)) {
+      keys=done ? levels.filter(n=>n<=value).map(n=>prefix+n) :
+        recordedLevels.filter(n=>n>=value).map(n=>prefix+n);
+    }
     if(pieces[0]==='skill') keys=ranks.filter(n=>done?n<=value:n>=value).map(n=>prefix+n);
     for(const item of keys) {if(done)p.flags[item]=true;else delete p.flags[item];}
   }
   function available(p) {return p.order.length>0;}
-  function level(p,c) {return Math.max(1,...levels.filter(n=>p.flags[levelKey(c,n)]));}
+  function level(p,c) {return Math.max(1,...recordedLevels.filter(n=>p.flags[levelKey(c,n)]));}
   function earned(p,prof,n) {return p.order.some(c=>p.flags[skillKey(c,prof,n)]);}
   function setOtherLP(p,input) {
     const text=typeof input==='string'?input.trim():input;
@@ -161,19 +168,10 @@
 
   function levelStep(p,c,end) {
     const current=level(p,c);
-    const checkpoints=[5,...lpLevels];
-    if(assignedCrafts(p,c).length)checkpoints.push(...gates);
-    if(c===mainClass(p))checkpoints.push(40);
-    const n=checkpoints.sort((a,b)=>a-b).find(n=>n>current && n<=end);
+    const checkpoints=assignedCrafts(p,c).length?levels:lpLevels;
+    const n=checkpoints.find(n=>n>current && n<=end);
     if(!n)return null;
-    if(n===40) return {
-      key:levelKey(c,40),title:c+' - Reach level 40 and get your first mount',
-      why:c==='Warlock'||c==='Paladin'?'Complete your level-40 class mount quest.':
-        'Buy Apprentice Riding and complete the first mount quest. Keep levelling and gathering if you still need gold.'
-    };
-    const why=lpLevels.includes(n)?'This class milestone earns 1 LP.':
-      n===5?'Log out in an inn between sessions to build rested XP.':
-      'Continue levelling '+c+'.';
+    const why=lpLevels.includes(n)?'This class milestone earns 1 LP.':'Continue levelling '+c+'.';
     return {key:levelKey(c,n),title:c+' — Reach level '+n,why};
   }
 
@@ -221,7 +219,8 @@
     const sim={...p,flags:{...p.flags}};
     const startLP=totals(p).earned,target=priority(p),main=mainClass(p);
     const first60=!!main && level(p,main)>=60;
-    const result={startLP,target,phases:[],projectedLP:startLP,projectedPre60LP:startLP,first60,
+    const mountLevelReached=!!main && level(p,main)>=40;
+    const result={startLP,target,phases:[],projectedLP:startLP,projectedPre60LP:startLP,first60,mountLevelReached,
       reachedGoal:target!==null && startLP>=target};
     if(!main)return result;
     const wantsLP=()=>target!==null && result.projectedLP<target;
@@ -243,10 +242,10 @@
       while((step=levelStep(sim,c,end))) add(row,step);
     }
 
-    if(level(sim,main)<40) {
-      const row=phase(main+' to level 40 and the first mount');
-      advance(row,main,40);
-      if(row.steps[0].key!==levelKey(main,40))row.steps[0].why+=' Save for your first mount as you level.';
+    if(!mountLevelReached) {
+      const row=phase(main+' to level 45');
+      advance(row,main,45);
+      row.steps[0].why+=' Plan for your first mount at level 40 as you level.';
     }
 
     function quickPoints() {
@@ -258,8 +257,7 @@
     quickPoints();
 
     if(!first60) {
-      const row=phase(main+' to level 45');
-      advance(row,main,45);
+      if(level(sim,main)<45)advance(phase(main+' to level 45'),main,45);
       if(wantsLP()) {
         const nearby=phase('Finish nearby class milestones');
         for(const c of p.order.slice(1)) {

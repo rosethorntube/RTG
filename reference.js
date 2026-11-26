@@ -134,6 +134,25 @@
   const secondarySkills = ['Cooking','First Aid','Fishing'];
   const professionId = name => name.toLowerCase().replace(/ /g,'-');
   const recipeKey = name => norm(name).replace(/ /g,'');
+  const componentUses = new Map();
+  for(const [profession,data] of Object.entries(window.WYHProfessionRecipes || {})) {
+    for(const [recipe,materials] of Object.values(data.recipes)) {
+      for(const ingredient of materials.split(/,\s*/)) {
+        const parts=ingredient.match(/^(\d+) (.+)$/);
+        if(!parts)continue;
+        const [,quantity,name]=parts;
+        const key=recipeKey(name), uses=componentUses.get(key) || [];
+        uses.push({profession,recipe,quantity});
+        componentUses.set(key,uses);
+      }
+    }
+  }
+
+  function craftNote(label, text) {
+    const note=node('p','ref-craft-use');
+    note.append(node('strong','',label),document.createTextNode(' '+text));
+    return note;
+  }
 
   function trainingForBand(profession, rank, trainer) {
     const steps = {
@@ -179,6 +198,21 @@
       caption.append(node('strong','',label+(source.skill ? ' · Skill '+source.skill : '')),document.createTextNode(detail ? ' · '+detail : ''));
       if(profession==='leatherworking' && name==='Nightscape Headband')caption.append(' Keep crafting this until Nightscape Pants unlocks at 210.');
       item.append(caption);
+      const uses=componentUses.get(recipeKey(name));
+      if(uses) {
+        const recipes=uses.map(use=>{
+          const other=use.profession===profession ? '' : ' in '+use.profession;
+          return use.recipe+other+' ('+use.quantity+' per craft)';
+        });
+        item.append(craftNote('Keep','for '+recipes.join(', ')+'.'));
+      }
+      if(profession==='enchanting' && name==='Disenchant') {
+        item.append(
+          craftNote('Keep','Strange Dust and Lesser Magic Essence for early recipes, Lesser Astral Essence for Minor Agility, and Soul Dust for Lesser Stamina and Lesser Strength. Split one Greater Magic Essence into three Lesser as needed. Save one Greater Astral Essence for the Runed Golden Rod.'),
+          craftNote('Sell','spare Glimmering or Glowing Shards once your other enchants are covered. Save Brilliant Shards for the Runed Arcanite Rod.')
+        );
+      }
+      if(profession==='enchanting' && /^Runed .+ Rod$/.test(name))item.append(craftNote('Keep','this rod for enchanting.'));
       ol.append(item);
     }
     return ol;

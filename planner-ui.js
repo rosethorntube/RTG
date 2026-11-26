@@ -159,7 +159,7 @@
         region.append(node('p','order-limit','Record another '+(route.target-route.startLP)+' LP from other challenges or expand your roster to reach '+route.target+'.'));
       return;
     }
-    const main=plan.order[0],mounted=plan.flags[M.levelKey(main,40)];
+    const main=plan.order[0],mounted=route.mountLevelReached;
     const advice=[];
     if(!mounted) {
       advice.push('Level '+main+' to 40 and get your mount. Gather and sell materials as you level to help pay for riding.');
@@ -298,7 +298,7 @@
         cell.title=label;rewardCell(cell,M.levelKey(c,n),label,redraw);
       }
     }
-    lv.append(levelTable.table,node('p','plan-note','5 · Rest in an inn. 10 / 20 / 35 · Profession training. 40 · First mount. 25 / 45 / 60 · +1 LP each.'));
+    lv.append(levelTable.table);
     pro.append(node('h3','','Crafting professions'));
     const skillTable=tableFrame([['Class / profession'],...M.ranks.map(n=>[String(n)])]);
     for(const c of plan.order){

@@ -45,6 +45,8 @@
 .field-reference .ref-craft-step p { margin: .15rem 0; }
 .field-reference .ref-craft-materials,.field-reference .ref-craft-source { color: var(--r-muted); font-size: .88rem; line-height: 1.46; overflow-wrap: anywhere; }
 .field-reference .ref-craft-source strong { color: #e0be86; font-weight: 550; }
+.field-reference .ref-craft-use { color: #ddd2b8; font-size: .88rem; line-height: 1.46; overflow-wrap: anywhere; }
+.field-reference .ref-craft-use strong { color: var(--r-warm); }
 .field-reference .ref-steps { margin: .3rem 0; padding-left: 1.65rem; }
 .field-reference .ref-steps li { padding: .12rem 0 .12rem .15rem; line-height: 1.5; }
 .field-reference a { color: #e1c08d; text-underline-offset: 3px; }
