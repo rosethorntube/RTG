@@ -81,6 +81,7 @@
   }
   function save(p) { try {localStorage.setItem(key(),JSON.stringify(p)); return true;} catch {return false;} }
   function assigned(p,c) {return p.jobs[c] || [];}
+  function assignedCrafts(p,c) {return assigned(p,c).filter(prof=>crafts.includes(prof));}
   function mark(p,key,done) {
     const pieces=key.split('/'), value=Number(pieces.at(-1)), prefix=pieces.slice(0,-1).join('/')+'/';
     let keys=[key];
@@ -101,7 +102,7 @@
   }
   function missingRuns(p,runs) {return runs.filter(([name])=>!p.flags[dungeonKey(name)]);}
   function totals(p) {
-    const plannedCrafts = new Set(p.order.flatMap(c=>assigned(p,c)).filter(s=>crafts.includes(s)));
+    const plannedCrafts = new Set(p.order.flatMap(c=>assignedCrafts(p,c)));
     let classLP=0, skillLP=0;
     for (const c of p.order) {
       for (const n of lpLevels) if (p.flags[levelKey(c,n)]) classLP++;
@@ -160,11 +161,11 @@
 
   function levelStep(p,c,end) {
     const current=level(p,c);
-    const checkpoints=c===mainClass(p)?[5,10,20,25,35,40,45,60]:
-      assigned(p,c).length?[5,10,20,25,35,45,60]:[5,...lpLevels];
-    const n=checkpoints.find(n=>n>current && n<=end);
+    const checkpoints=[5,...lpLevels];
+    if(assignedCrafts(p,c).length)checkpoints.push(...gates);
+    if(c===mainClass(p))checkpoints.push(40);
+    const n=checkpoints.sort((a,b)=>a-b).find(n=>n>current && n<=end);
     if(!n)return null;
-    const gather=assigned(p,c).filter(prof=>!crafts.includes(prof));
     if(n===40) return {
       key:levelKey(c,40),title:c+' - Reach level 40 and get your first mount',
       why:c==='Warlock'||c==='Paladin'?'Complete your level-40 class mount quest.':
@@ -173,15 +174,14 @@
     const why=lpLevels.includes(n)?'This class milestone earns 1 LP.':
       n===5?'Log out in an inn between sessions to build rested XP.':
       'Continue levelling '+c+'.';
-    return {key:levelKey(c,n),title:c+' — Reach level '+n,
-      why:why+(gather.length?' Pick up '+gather.join(' and ')+' materials along the way.':'')};
+    return {key:levelKey(c,n),title:c+' — Reach level '+n,why};
   }
 
 
   function starterCraft(p) {
     const candidates=[];
     for(const c of p.order) {
-      const jobs=assigned(p,c).filter(prof=>crafts.includes(prof) && !earned(p,prof,150));
+      const jobs=assignedCrafts(p,c).filter(prof=>!earned(p,prof,150));
       if(jobs.length) candidates.push({c,jobs,current:level(p,c)});
     }
     candidates.sort((a,b)=>Number(b.current>=10)-Number(a.current>=10) || b.jobs.length-a.jobs.length);
@@ -198,7 +198,7 @@
       if(i===0)continue;
       for(const c of p.order) {
         if(level(p,c)<gates[i])continue;
-        const prof=assigned(p,c).find(name=>crafts.includes(name) && !earned(p,name,rank)
+        const prof=assignedCrafts(p,c).find(name=>!earned(p,name,rank)
           && p.flags[skillKey(c,name,ranks[i-1])]);
         if(prof) return {key:skillKey(c,prof,rank),title:c+' — Reach '+prof+' '+rank,
           why:'This craft already has its previous tier. Check the materials and training before spending on the next 1 LP.'};
@@ -287,14 +287,12 @@
     }
 
     for(const c of sim.order) {
-      const row=phase(level(sim,c)>=60?'Finish '+c+' professions':c+' to level 60');
+      const row=phase(level(sim,c)>=60?'Finish '+c+' crafting':c+' to level 60');
       advance(row,c,60);
-      for(const prof of assigned(sim,c)) for(const rank of ranks) {
+      for(const prof of assignedCrafts(sim,c)) for(const rank of ranks) {
         const key=skillKey(c,prof,rank);
         if(sim.flags[key])continue;
-        const why=crafts.includes(prof)?'Finish this profession using banked materials where possible.':
-          'Gather while levelling '+c+' and use this milestone to record your progress.';
-        add(row,{key,title:c+' — '+prof+' '+rank,why});
+        add(row,{key,title:c+' — '+prof+' '+rank,why:'Finish this profession using banked materials where possible.'});
       }
     }
     result.phases=result.phases.filter(row=>row.steps.length);
@@ -304,5 +302,5 @@
     return milestoneOrder(p).phases[0]?.steps[0] || null;
   }
 
-  window.WYHPlan={get key(){return key();}, get relatedKeys(){return relatedKeys();},get groups(){return groups();},emptyPlan,savedGuideEntries,classes,crafts,professions,levels,descriptions,ranks,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,mark,available,earned,totals,reward,setOtherLP,priority,setPriority,milestoneOrder,suggestion};
+  window.WYHPlan={get key(){return key();}, get relatedKeys(){return relatedKeys();},get groups(){return groups();},emptyPlan,savedGuideEntries,classes,crafts,professions,levels,descriptions,ranks,lpLevels,levelKey,skillKey,dungeonKey,load,save,copyPreset,assigned,assignedCrafts,mark,available,earned,totals,reward,setOtherLP,priority,setPriority,milestoneOrder,suggestion};
 })();

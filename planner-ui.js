@@ -151,7 +151,10 @@
     region.append(heading);host.append(region);
     const route=M.milestoneOrder(plan);
     if(!route.phases.length) {
-      region.append(node('p','plan-note','All selected classes are at level 60 and every selected profession is at 300.'));
+      const hasCrafts=plan.order.some(c=>M.assignedCrafts(plan,c).length);
+      region.append(node('p','plan-note',hasCrafts
+        ? 'All selected classes are at level 60 and every selected craft is at 300.'
+        : 'All selected classes are at level 60.'));
       if(route.target && !route.reachedGoal)
         region.append(node('p','order-limit','Record another '+(route.target-route.startLP)+' LP from other challenges or expand your roster to reach '+route.target+'.'));
       return;
@@ -296,22 +299,22 @@
       }
     }
     lv.append(levelTable.table,node('p','plan-note','5 · Rest in an inn. 10 / 20 / 35 · Profession training. 40 · First mount. 25 / 45 / 60 · +1 LP each.'));
-    pro.append(node('h3','','Professions'));
+    pro.append(node('h3','','Crafting professions'));
     const skillTable=tableFrame([['Class / profession'],...M.ranks.map(n=>[String(n)])]);
     for(const c of plan.order){
-      for(const s of M.assigned(plan,c)){
+      for(const s of M.assignedCrafts(plan,c)){
         const row=skillTable.body.insertRow(),name=node('th');name.scope='row';name.append(node('small','skill-owner',c),document.createTextNode(s));row.append(name);
         for(const n of M.ranks){
           const cell=row.insertCell(),label=c+' · '+s+' '+n;
-          cell.title=M.crafts.includes(s)?label:label+' · Gathering checkpoint';
-          rewardCell(cell,M.skillKey(c,s,n),cell.title,redraw);
+          cell.title=label;
+          rewardCell(cell,M.skillKey(c,s,n),label,redraw);
         }
       }
     }
     if(skillTable.body.children.length){
-      pro.append(skillTable.table,node('p','plan-note','Each crafting tier counts once across selected classes, including professions they previously trained. Gathering ticks track skill only.'));
+      pro.append(skillTable.table,node('p','plan-note','Each crafting tier counts once across selected classes, including professions they previously trained.'));
     }else{
-      const setupLink=node('a','plan-note','Add professions in Setup');
+      const setupLink=node('a','plan-note','Add a crafting profession in Setup');
       setupLink.href='#setup';
       pro.append(setupLink);
     }
