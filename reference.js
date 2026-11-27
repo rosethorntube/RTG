@@ -507,6 +507,9 @@
       if(location.hash==='#sleeping-bag' && v!=='sleeping-bag')location.hash='#guide';
       show(v);
     }));
+    const warriorGear=node('a','top-addon','Warrior levelling gear');
+    warriorGear.href='warrior-gear.html';
+    toolbar.append(warriorGear);
     host.append(toolbar,area);
     function show(id){
       area.replaceChildren();
